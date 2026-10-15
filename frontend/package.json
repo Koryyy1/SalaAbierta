@@ -38,7 +38,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "backend": "npm --prefix backend start",
+    "backend": "npm --prefix ../backend start",
     "lint": "expo lint"
   },
   "private": true

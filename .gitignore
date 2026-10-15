@@ -30,8 +30,10 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
-.env*.local
+# local env files (nunca subir credenciales)
+.env
+.env.*
+!.env.example
 
 # typescript
 *.tsbuildinfo
@@ -39,5 +41,8 @@ yarn-error.*
 example
 
 # generated native folders
-/ios
-/android
+/frontend/ios
+/frontend/android
+
+# base de datos embebida local (backend)
+backend/.data/

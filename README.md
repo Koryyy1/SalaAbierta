@@ -4,8 +4,27 @@ SalaAbierta es una aplicación móvil diseñada para optimizar y transparentar l
 * *¿A quién va dirigido?:* Profesores (perfil de gestión y control) y Apoderados (perfil de visualización e interacción).
 * *¿Qué problema resuelve?:* Elimina la fragmentación de la información y la desconexión comunicacional entre la escuela y el hogar, reemplazando métodos tradicionales (como la libreta de comunicaciones o autorizaciones en papel) por un ecosistema digital centralizado, seguro y auditable.
 
+## 📁 Estructura del Repositorio
+```text
+SalaAbierta/
+├── frontend/   App móvil/web (Expo + React Native, TypeScript)
+│   ├── src/app/          Pantallas (Expo Router): login, muro, profesor/, apoderado/
+│   ├── src/components/   Componentes reutilizables
+│   └── src/lib/          Cliente de la API y autenticación
+├── backend/    API REST (Node.js + Express)
+│   ├── routes/           Endpoints: auth, académico, muro
+│   ├── middleware/       Autenticación JWT y control de roles (RBAC)
+│   ├── services/         Registro de auditoría
+│   ├── config/           Conexión a la base de datos
+│   └── db/               Esquema SQL y datos de demostración
+├── Fase 1/     Evidencias de la Fase 1 (Evidencias Grupales / Evidencias Individuales)
+├── Fase 2/     Evidencias de la Fase 2 (Evidencias Grupales / Individuales / Evidencia Audiovisual)
+├── LICENSE
+└── README.md
+```
+
 ## 🛠️ Tecnologías Utilizadas
-* *Frontend Móvil/Web:* React Native con Expo (Expo Router, TypeScript) — carpeta raíz (`src/`).
+* *Frontend Móvil/Web:* React Native con Expo (Expo Router, TypeScript) — carpeta `frontend/`.
 * *Backend & API:* Node.js + Express con JWT y control de acceso por roles (RBAC) — carpeta `backend/`.
 * *Base de Datos:* PostgreSQL. En desarrollo, sin configuración, se usa PostgreSQL embebido (PGlite).
 * *Inteligencia Artificial:* Integración con API de LLM (OpenAI / Gemini) para Agente Conversacional (pendiente).
@@ -17,16 +36,21 @@ Requisitos: Node.js y Git.
 ```bash
 git clone https://github.com/Koryyy1/SalaAbierta.git
 cd SalaAbierta
-npm install
-npm --prefix backend install
 
-npm run backend   # Terminal 1: API en http://localhost:3000
-npm run web       # Terminal 2: app en http://localhost:8081
+# Terminal 1: API en http://localhost:3000
+cd backend
+npm install
+npm start
+
+# Terminal 2: app en http://localhost:8081
+cd frontend
+npm install
+npm run web
 ```
 
 * La primera vez, el backend tarda unos segundos en crear la base de datos con datos de demostración (`backend/.data`, no versionada). Borrar esa carpeta reinicia los datos.
 * Para PostgreSQL real, copiar `backend/.env.example` a `backend/.env` y completar `DB_*` y `JWT_SECRET`.
-* Móvil con Expo Go: `npm start` y definir `EXPO_PUBLIC_API_URL=http://<IP-de-tu-PC>:3000` (misma red Wi-Fi). El emulador Android usa `10.0.2.2` automáticamente.
+* Móvil con Expo Go: desde `frontend/`, `npm start` y definir `EXPO_PUBLIC_API_URL=http://<IP-de-tu-PC>:3000` (misma red Wi-Fi). El emulador Android usa `10.0.2.2` automáticamente.
 
 ### Usuarios de demostración
 | Rol | Correo | Contraseña |
