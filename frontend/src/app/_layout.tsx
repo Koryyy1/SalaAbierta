@@ -17,6 +17,7 @@ const privadas = [
   'apoderado/asistencia',
   'apoderado/notas',
   'apoderado/anotaciones',
+  'admin/auditoria',
 ] as const;
 
 function Routes() {

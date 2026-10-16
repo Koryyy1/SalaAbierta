@@ -180,10 +180,38 @@ router.post('/alumnos/:alumnoId/anotaciones', requiereRol('Profesor'), guardiaAl
 // --- Auditoría --------------------------------------------------------------
 
 router.get('/auditoria', requiereRol('Administrador'), async (req, res) => {
+    const { desde, hasta, usuario, tabla } = req.query;
+    if ((desde && !FECHA.test(desde)) || (hasta && !FECHA.test(hasta))) {
+        return res.status(400).json({ estado: 'Error', mensaje: 'Las fechas deben tener formato AAAA-MM-DD.' });
+    }
+
+    const condiciones = [];
+    const params = [];
+    if (desde) {
+        params.push(desde);
+        condiciones.push(`a.fecha::date >= $${params.length}::date`);
+    }
+    if (hasta) {
+        params.push(hasta);
+        condiciones.push(`a.fecha::date <= $${params.length}::date`);
+    }
+    if (usuario) {
+        params.push(`%${usuario}%`);
+        condiciones.push(`u.nombre ILIKE $${params.length}`);
+    }
+    if (tabla) {
+        params.push(tabla);
+        condiciones.push(`a.tabla = $${params.length}`);
+    }
+
+    const where = condiciones.length ? `WHERE ${condiciones.join(' AND ')}` : '';
     const { rows } = await pool.query(
         `SELECT a.id, u.nombre AS usuario, a.accion, a.tabla, a.registro_id, a.datos_antes, a.datos_despues,
                 to_char(a.fecha, 'YYYY-MM-DD"T"HH24:MI:SS') AS fecha
-         FROM auditoria a LEFT JOIN usuarios u ON u.id = a.usuario_id ORDER BY a.id DESC LIMIT 200`
+         FROM auditoria a LEFT JOIN usuarios u ON u.id = a.usuario_id
+         ${where}
+         ORDER BY a.fecha DESC, a.id DESC LIMIT 200`,
+        params
     );
     res.json({ estado: 'Éxito', datos: rows });
 });

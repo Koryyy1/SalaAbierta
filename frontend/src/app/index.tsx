@@ -27,17 +27,28 @@ const menuProfesor: MenuItem[] = [
   { label: 'Muro del curso', initial: 'M', href: '/muro' },
 ];
 
+const menuAdmin: MenuItem[] = [{ label: 'Auditoría', initial: 'A', href: '/admin/auditoria' }];
+
 export default function HomeScreen() {
   const router = useRouter();
   const { usuario } = useAuth();
   const esProfesor = usuario?.rol === 'Profesor';
-  const menuItems = esProfesor ? menuProfesor : usuario?.rol === 'Apoderado' ? menuApoderado : [];
+  const esAdmin = usuario?.rol === 'Administrador';
+  const menuItems = esProfesor
+    ? menuProfesor
+    : esAdmin
+      ? menuAdmin
+      : usuario?.rol === 'Apoderado'
+        ? menuApoderado
+        : [];
+  const eyebrow = esProfesor ? 'Portal de profesores' : esAdmin ? 'Portal de administración' : 'Portal de apoderados';
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         <View style={{ flexShrink: 1 }}>
-          <Text style={styles.eyebrow}>{esProfesor ? 'Portal de profesores' : 'Portal de apoderados'}</Text>
+          <Text style={styles.eyebrow}>{eyebrow}</Text>
+
           <Text style={styles.welcomeText}>Bienvenido, {usuario?.nombre}</Text>
           <LogoutLink />
         </View>

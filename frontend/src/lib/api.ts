@@ -1,8 +1,17 @@
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
-// Para un dispositivo físico definir EXPO_PUBLIC_API_URL con la IP de la PC (ej. http://192.168.1.10:3000)
-export const API_URL =
-  process.env.EXPO_PUBLIC_API_URL ?? (Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000');
+// En desarrollo, hostUri es la IP del servidor de Expo (la PC), así cada dispositivo usa su propia red.
+const hostDelServidor = Constants.expoConfig?.hostUri?.split(':')[0];
+const esHostLocal = !hostDelServidor || hostDelServidor === 'localhost' || hostDelServidor === '127.0.0.1';
+
+const resolverApiUrl = () => {
+  if (process.env.EXPO_PUBLIC_API_URL) return process.env.EXPO_PUBLIC_API_URL;
+  if (!esHostLocal) return `http://${hostDelServidor}:3000`;
+  return Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000';
+};
+
+export const API_URL = resolverApiUrl();
 
 export type Rol = 'Profesor' | 'Apoderado' | 'Administrador';
 export type Usuario = { id: number; nombre: string; email: string; rol: Rol };
@@ -13,6 +22,17 @@ export type TipoAnotacion = 'positiva' | 'negativa' | 'observacion';
 export type Calificacion = { id: number; asignatura: string; descripcion: string; nota: number; fecha: string };
 export type Anotacion = { id: number; tipo: TipoAnotacion; descripcion: string; fecha: string };
 export type Comentario = { id: number; autor: string; contenido: string; creado_en: string };
+export type RegistroAuditoria = {
+  id: number;
+  usuario: string | null;
+  accion: string;
+  tabla: string;
+  registro_id: number | null;
+  datos_antes: Record<string, unknown> | null;
+  datos_despues: Record<string, unknown> | null;
+  fecha: string;
+};
+export type FiltrosAuditoria = { desde?: string; hasta?: string; usuario?: string; tabla?: string };
 export type Anuncio = {
   id: number;
   titulo: string;
@@ -105,4 +125,12 @@ export const api = {
     request<unknown>('POST', `/cursos/${cursoId}/anuncios`, data),
   confirmarAnuncio: (id: number) => request<unknown>('POST', `/anuncios/${id}/confirmar`),
   comentarAnuncio: (id: number, contenido: string) => request<unknown>('POST', `/anuncios/${id}/comentarios`, { contenido }),
+
+  auditoria: (filtros: FiltrosAuditoria) => {
+    const query = Object.entries(filtros)
+      .filter(([, valor]) => valor)
+      .map(([clave, valor]) => `${clave}=${encodeURIComponent(valor!)}`)
+      .join('&');
+    return request<Lista<RegistroAuditoria>>('GET', `/auditoria${query ? `?${query}` : ''}`).then((r) => r.datos);
+  },
 };
