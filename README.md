@@ -1,7 +1,7 @@
 # SalaAbierta
 SalaAbierta es una aplicación móvil diseñada para optimizar y transparentar la gestión académica y la comunicación en colegios de educación básica
-* *¿Qué hace?:* Centraliza el registro de asistencia, calificaciones, anotaciones y agendamiento de reuniones. Incorpora un sistema de recompensas, alertas tempranas de rendimiento, y un agente de inteligencia artificial para facilitar la accesibilidad.
-* *¿A quién va dirigido?:* Profesores (perfil de gestión y control) y Apoderados (perfil de visualización e interacción).
+* *¿Qué hace?:* Centraliza el registro de asistencia, calificaciones y anotaciones, y la comunicación entre profesores y apoderados mediante un muro de anuncios por curso. Incorpora un registro de auditoría de los datos sensibles y, en la Épica 003, alertas tempranas de rendimiento y un agente de inteligencia artificial para facilitar la accesibilidad.
+* *¿A quién va dirigido?:* Profesores (perfil de gestión y control), Apoderados (perfil de visualización e interacción) y Administradores (auditoría y configuración).
 * *¿Qué problema resuelve?:* Elimina la fragmentación de la información y la desconexión comunicacional entre la escuela y el hogar, reemplazando métodos tradicionales (como la libreta de comunicaciones o autorizaciones en papel) por un ecosistema digital centralizado, seguro y auditable.
 
 ## 📁 Estructura del Repositorio
@@ -27,7 +27,7 @@ SalaAbierta/
 * *Frontend Móvil/Web:* React Native con Expo (Expo Router, TypeScript) — carpeta `frontend/`.
 * *Backend & API:* Node.js + Express con JWT y control de acceso por roles (RBAC) — carpeta `backend/`.
 * *Base de Datos:* PostgreSQL. En desarrollo, sin configuración, se usa PostgreSQL embebido (PGlite).
-* *Inteligencia Artificial:* Integración con API de LLM (OpenAI / Gemini) para Agente Conversacional (pendiente).
+* *Inteligencia Artificial:* Integración con API de LLM (Google Gemini) para Agente Conversacional (pendiente).
 * *Cloud & Despliegue:* AWS / GitHub Actions (CI/CD) (pendiente).
 
 ## ⚙️ Instrucciones para ejecutar el proyecto localmente
@@ -63,7 +63,9 @@ npm run web
 ### Alcance implementado
 * **Épica 001 – Gestión académica:** el profesor pasa asistencia, registra y edita notas y anotaciones; todo cambio queda en la tabla `auditoria` (`GET /api/auditoria`, rol Administrador).
 * **Épica 002 (parcial) – Muro:** el profesor publica anuncios; el apoderado ve solo los datos de sus pupilos, lee el muro, confirma recepción y comenta.
-* Pendiente: Horario, Certificados y Épica 003 (Chatbot IA, alertas tempranas).
+* **Épica 002 – HU008:** falta mostrar al profesor quiénes confirmaron cada anuncio.
+* Pendiente: Épica 003 (agente IA conversacional y alertas tempranas), pruebas automatizadas, Docker y despliegue en AWS.
+* Fuera del alcance del PMV: agendamiento de reuniones, sistema de recompensas, horario y certificados.
 ## 👥 Integrantes del Equipo
 * *Fernando Pavez* - Líder de Proyecto / Desarrollador Backend y Datos.
 * *Catalina Aguilar* - Arquitecta de Software / Desarrolladora Frontend Móvil.
@@ -72,12 +74,12 @@ npm run web
 El proyecto se desarrolla bajo un marco de trabajo ágil basado en *Scrum*, adaptado a un ciclo de desarrollo de 10 semanas. 
 * Se utilizan Sprints semanales con entregas de valor continuo (Producto Mínimo Viable iterativo).
 * Seguimiento de tareas mediante tableros *Kanban* (GitHub Projects / Trello).
-* Control de versiones estructurado en Git (ramas main, develop, y feature/).
+* Control de versiones en Git: rama `main` y, desde el Sprint 5, ramas `feature/` por historia integradas mediante Pull Request revisado por el otro integrante.
 
 ## 🏗️ Arquitectura de la Solución
 El sistema utiliza una arquitectura *Cliente-Servidor* separada para garantizar seguridad y escalabilidad:
 
-1. *Capa de Presentación (App Móvil):* Interfaces separadas y optimizadas por rol (Profesor/Apoderado) que consumen servicios vía HTTP.
+1. *Capa de Presentación (App Móvil):* Interfaces separadas y optimizadas por rol (Profesor/Apoderado/Administrador) que consumen servicios vía HTTP.
 2. *Capa Lógica (API REST):* Actúa como filtro de seguridad implementando RBAC (Control de Acceso Basado en Roles). Valida tokens JWT y asegura que los apoderados solo consulten datos asociados a sus pupilos mediante llaves foráneas.
 3. *Capa de Datos:* Modelo relacional que soporta integridad referencial. Incluye un módulo de *Registro de Auditoría* que captura automáticamente cualquier modificación de datos sensibles (quién, cuándo y qué se modificó).
 4. *Módulo de Inteligencia y Accesibilidad:* Un servicio acoplado que procesa consultas en lenguaje natural (Agente IA) y un motor de reglas que evalúa periódicamente la base de datos para emitir Alertas Tempranas al cuerpo docente.
