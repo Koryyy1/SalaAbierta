@@ -18,7 +18,7 @@ SalaAbierta/
 │   ├── config/           Conexión a la base de datos
 │   └── db/               Esquema SQL y datos de demostración
 ├── Fase 1/     Evidencias de la Fase 1 (Evidencias Grupales / Evidencias Individuales)
-├── Fase 2/     Evidencias de la Fase 2 (Evidencias Grupales / Individuales / Evidencia Audiovisual)
+├── Fase 2/     Evidencias de la Fase 2 (Evidencias Grupales / Evidencias Individuales / Evidencias Proyecto (version Agil): documentos ágiles y videos)
 ├── LICENSE
 └── README.md
 ```
