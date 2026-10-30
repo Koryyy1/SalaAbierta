@@ -41,8 +41,17 @@ export type Anuncio = {
   creado_en: string;
   confirmaciones: number;
   confirmado: boolean;
+  total_apoderados: number;
   comentarios: Comentario[];
 };
+export type ConfirmacionApoderado = {
+  id: number;
+  nombre: string;
+  pupilos: string;
+  confirmado: boolean;
+  confirmado_en: string | null;
+};
+export type DetalleConfirmaciones = { total: number; confirmados: number; pendientes: number; datos: ConfirmacionApoderado[] };
 
 export class ApiError extends Error {
   constructor(
@@ -123,6 +132,7 @@ export const api = {
   anuncios: (cursoId: number) => request<Lista<Anuncio>>('GET', `/cursos/${cursoId}/anuncios`).then((r) => r.datos),
   crearAnuncio: (cursoId: number, data: { titulo: string; contenido: string }) =>
     request<unknown>('POST', `/cursos/${cursoId}/anuncios`, data),
+  confirmacionesAnuncio: (id: number) => request<DetalleConfirmaciones>('GET', `/anuncios/${id}/confirmaciones`),
   confirmarAnuncio: (id: number) => request<unknown>('POST', `/anuncios/${id}/confirmar`),
   comentarAnuncio: (id: number, contenido: string) => request<unknown>('POST', `/anuncios/${id}/comentarios`, { contenido }),
 

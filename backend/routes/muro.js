@@ -15,7 +15,9 @@ router.get('/cursos/:cursoId/anuncios', guardiaCurso, async (req, res) => {
     const { rows: anuncios } = await pool.query(
         `SELECT n.id, n.titulo, n.contenido, ${TS.replace('%s', 'n.creado_en')} AS creado_en, u.nombre AS autor,
                 (SELECT COUNT(*)::int FROM anuncio_confirmaciones c WHERE c.anuncio_id = n.id) AS confirmaciones,
-                EXISTS (SELECT 1 FROM anuncio_confirmaciones c WHERE c.anuncio_id = n.id AND c.usuario_id = $2) AS confirmado
+                EXISTS (SELECT 1 FROM anuncio_confirmaciones c WHERE c.anuncio_id = n.id AND c.usuario_id = $2) AS confirmado,
+                (SELECT COUNT(DISTINCT aa.usuario_id)::int FROM apoderado_alumno aa JOIN alumnos al ON al.id = aa.alumno_id
+                 WHERE al.curso_id = n.curso_id) AS total_apoderados
          FROM anuncios n JOIN usuarios u ON u.id = n.autor_id
          WHERE n.curso_id = $1 ORDER BY n.creado_en DESC, n.id DESC`,
         [req.cursoId, req.user.id]
@@ -59,6 +61,27 @@ async function anuncioAccesible(req, res) {
     }
     return rows[0];
 }
+
+// HU008: el profesor ve qué apoderados del curso confirmaron la recepción del anuncio y cuáles faltan
+router.get('/anuncios/:id/confirmaciones', requiereRol('Profesor'), async (req, res) => {
+    const anuncio = await anuncioAccesible(req, res);
+    if (!anuncio) return;
+    const { rows } = await pool.query(
+        `SELECT u.id, u.nombre,
+                string_agg(DISTINCT al.nombre, ', ' ORDER BY al.nombre) AS pupilos,
+                ${TS.replace('%s', 'c.creado_en')} AS confirmado_en
+         FROM apoderado_alumno aa
+         JOIN alumnos al ON al.id = aa.alumno_id AND al.curso_id = $1
+         JOIN usuarios u ON u.id = aa.usuario_id
+         LEFT JOIN anuncio_confirmaciones c ON c.anuncio_id = $2 AND c.usuario_id = u.id
+         GROUP BY u.id, u.nombre, c.creado_en
+         ORDER BY (c.creado_en IS NULL) DESC, u.nombre`,
+        [anuncio.curso_id, anuncio.id]
+    );
+    const datos = rows.map((r) => ({ ...r, confirmado: r.confirmado_en !== null }));
+    const confirmados = datos.filter((r) => r.confirmado).length;
+    res.json({ estado: 'Éxito', total: datos.length, confirmados, pendientes: datos.length - confirmados, datos });
+});
 
 router.post('/anuncios/:id/confirmar', requiereRol('Apoderado'), async (req, res) => {
     const anuncio = await anuncioAccesible(req, res);
