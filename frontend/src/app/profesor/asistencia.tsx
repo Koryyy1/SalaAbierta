@@ -23,6 +23,8 @@ const FECHA = /^\d{4}-\d{2}-\d{2}$/;
 function Pasar({ cursoId }: { cursoId: number }) {
   const [fecha, setFecha] = useState(hoyISO());
   const fechaOk = FECHA.test(fecha) && !Number.isNaN(Date.parse(fecha));
+  // AAAA-MM-DD se compara bien como texto; no se permite registrar días que aún no ocurren
+  const esFutura = fechaOk && fecha > hoyISO();
   const { data, error, loading } = useAsync(
     () => (fechaOk ? api.asistenciaCurso(cursoId, fecha) : Promise.resolve([])),
     [cursoId, fecha, fechaOk],
@@ -59,6 +61,7 @@ function Pasar({ cursoId }: { cursoId: number }) {
       <Card>
         <Field label="Fecha (AAAA-MM-DD)" value={fecha} onChangeText={setFecha} autoCapitalize="none" />
         {!fechaOk && <Notice text="Fecha inválida." />}
+        {esFutura && <Notice text="No se puede registrar asistencia en una fecha futura." />}
       </Card>
       {fechaOk && (loading ? <Loading /> : <Notice text={error} />)}
       {fechaOk && data && !data.length && <Empty text="El curso no tiene alumnos." />}
@@ -83,7 +86,7 @@ function Pasar({ cursoId }: { cursoId: number }) {
         <>
           <Notice text={mensaje && !mensaje.ok ? mensaje.texto : null} />
           <Notice tone="ok" text={mensaje?.ok ? mensaje.texto : null} />
-          <Button label={guardando ? 'Guardando…' : 'Guardar asistencia'} onPress={guardar} disabled={guardando} />
+          <Button label={guardando ? 'Guardando…' : 'Guardar asistencia'} onPress={guardar} disabled={guardando || esFutura} />
         </>
       )}
     </>

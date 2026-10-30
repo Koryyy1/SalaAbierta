@@ -20,27 +20,47 @@ async function connect() {
         });
         await pool.query('SELECT 1');
         console.log('📦 Conectado exitosamente a PostgreSQL');
+        const adaptar = (cliente) => async (text, params) => {
+            const r = await cliente.query(text, params);
+            return { rows: r.rows, rowCount: r.rowCount };
+        };
         return {
-            query: async (text, params) => {
-                const r = await pool.query(text, params);
-                return { rows: r.rows, rowCount: r.rowCount };
-            },
+            query: adaptar(pool),
             exec: (sql) => pool.query(sql),
+            // Ejecuta fn dentro de BEGIN/COMMIT en una sola conexión; ante cualquier error hace ROLLBACK
+            transaction: async (fn) => {
+                const cliente = await pool.connect();
+                try {
+                    await cliente.query('BEGIN');
+                    const resultado = await fn({ query: adaptar(cliente) });
+                    await cliente.query('COMMIT');
+                    return resultado;
+                } catch (err) {
+                    await cliente.query('ROLLBACK');
+                    throw err;
+                } finally {
+                    cliente.release();
+                }
+            },
         };
     }
 
     const { PGlite } = await import('@electric-sql/pglite');
+    // PGLITE_DIR=memory:// crea una base temporal en memoria (se usa en las pruebas automatizadas)
     const dir = process.env.PGLITE_DIR || path.join(__dirname, '..', '.data', 'pglite');
-    fs.mkdirSync(path.dirname(dir), { recursive: true });
+    if (!dir.startsWith('memory://')) fs.mkdirSync(path.dirname(dir), { recursive: true });
     const db = new PGlite(dir);
     await db.waitReady;
-    console.log(`📦 Usando PostgreSQL embebido (PGlite) en ${dir}`);
+    if (process.env.NODE_ENV !== 'test') console.log(`📦 Usando PostgreSQL embebido (PGlite) en ${dir}`);
+    const adaptar = (cliente) => async (text, params) => {
+        const r = await cliente.query(text, params);
+        return { rows: r.rows, rowCount: r.rows.length || r.affectedRows || 0 };
+    };
     return {
-        query: async (text, params) => {
-            const r = await db.query(text, params);
-            return { rows: r.rows, rowCount: r.rows.length || r.affectedRows || 0 };
-        },
+        query: adaptar(db),
         exec: (sql) => db.exec(sql),
+        // PGlite hace ROLLBACK automáticamente si fn lanza un error
+        transaction: (fn) => db.transaction((tx) => fn({ query: adaptar(tx) })),
     };
 }
 
@@ -55,5 +75,10 @@ module.exports = {
     query: async (text, params) => {
         await ready;
         return impl.query(text, params);
+    },
+    // Agrupa varias operaciones (por ejemplo, un cambio y su auditoría) para que se guarden todas o ninguna
+    transaction: async (fn) => {
+        await ready;
+        return impl.transaction(fn);
     },
 };
