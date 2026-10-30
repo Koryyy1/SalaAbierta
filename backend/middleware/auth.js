@@ -36,7 +36,8 @@ const requiereRol = (...roles) => (req, res, next) =>
         ? next()
         : res.status(403).json({ estado: 'Error', mensaje: 'No tienes permisos para esta acción.' });
 
-// Filtro de seguridad: un profesor solo accede a sus cursos y un apoderado solo a sus pupilos
+// Filtro de seguridad: un profesor solo accede a sus cursos y un apoderado solo a sus pupilos.
+// El Administrador no lee datos de alumnos ni muros (principio de mínimo privilegio): solo consulta la auditoría.
 async function puedeVerCurso(user, cursoId) {
     if (user.rol === 'Profesor') {
         const { rows } = await pool.query('SELECT 1 FROM profesor_cursos WHERE usuario_id = $1 AND curso_id = $2', [user.id, cursoId]);
@@ -49,7 +50,7 @@ async function puedeVerCurso(user, cursoId) {
         );
         return rows.length > 0;
     }
-    return user.rol === 'Administrador';
+    return false;
 }
 
 async function puedeVerAlumno(user, alumnoId) {
@@ -64,7 +65,7 @@ async function puedeVerAlumno(user, alumnoId) {
         const { rows } = await pool.query('SELECT 1 FROM apoderado_alumno WHERE usuario_id = $1 AND alumno_id = $2', [user.id, alumnoId]);
         return rows.length > 0;
     }
-    return user.rol === 'Administrador';
+    return false;
 }
 
 // Valida que :id sea entero y que el usuario tenga acceso al recurso

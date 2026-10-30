@@ -16,7 +16,41 @@ import {
   useAsync,
 } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
-import { api, type Anuncio } from '@/lib/api';
+import { api, type Anuncio, type DetalleConfirmaciones } from '@/lib/api';
+
+// HU008: el profesor ve quiénes confirmaron la recepción del anuncio y quiénes faltan
+function DetalleConfirmacionesView({ anuncioId }: { anuncioId: number }) {
+  const [detalle, setDetalle] = useState<DetalleConfirmaciones | null>(null);
+  const [abierto, setAbierto] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const alternar = async () => {
+    if (abierto) return setAbierto(false);
+    try {
+      setDetalle(await api.confirmacionesAnuncio(anuncioId));
+      setError(null);
+      setAbierto(true);
+    } catch (e) {
+      setError(messageOf(e));
+    }
+  };
+
+  return (
+    <>
+      <Button label={abierto ? 'Ocultar confirmaciones' : 'Ver quiénes confirmaron'} tone="secondary" onPress={alternar} />
+      <Notice text={error} />
+      {abierto && detalle && !detalle.total && <Text style={{ color: colors.ink }}>El curso no tiene apoderados registrados.</Text>}
+      {abierto &&
+        detalle?.datos.map((a) => (
+          <Text key={a.id} style={{ color: a.confirmado ? colors.ok : colors.warn }}>
+            <Text style={{ fontWeight: '800' }}>{a.confirmado ? '✓ ' : '• '}{a.nombre}</Text>
+            {` (${a.pupilos}) · `}
+            {a.confirmado && a.confirmado_en ? `confirmó el ${formatFecha(a.confirmado_en)}` : 'pendiente'}
+          </Text>
+        ))}
+    </>
+  );
+}
 
 function AnuncioCard({ anuncio, esApoderado, onChange }: { anuncio: Anuncio; esApoderado: boolean; onChange: () => void }) {
   const [comentario, setComentario] = useState('');
@@ -47,8 +81,14 @@ function AnuncioCard({ anuncio, esApoderado, onChange }: { anuncio: Anuncio; esA
       </Text>
       <Text style={{ color: colors.ink, fontSize: 15 }}>{anuncio.contenido}</Text>
       <Text style={{ color: colors.brown, fontWeight: '700' }}>
-        {anuncio.confirmaciones} {anuncio.confirmaciones === 1 ? 'confirmación' : 'confirmaciones'}
+        {esApoderado
+          ? `${anuncio.confirmaciones} ${anuncio.confirmaciones === 1 ? 'confirmación' : 'confirmaciones'}`
+          : `${anuncio.confirmaciones} de ${anuncio.total_apoderados} apoderados confirmaron · faltan ${Math.max(
+              anuncio.total_apoderados - anuncio.confirmaciones,
+              0,
+            )}`}
       </Text>
+      {!esApoderado && <DetalleConfirmacionesView anuncioId={anuncio.id} />}
 
       {esApoderado &&
         (anuncio.confirmado ? (
