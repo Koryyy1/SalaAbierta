@@ -63,8 +63,17 @@ npm run web
 ### Alcance implementado
 * **Épica 001 – Gestión académica:** el profesor pasa asistencia, registra y edita notas y anotaciones; todo cambio queda en la tabla `auditoria` (`GET /api/auditoria`, rol Administrador).
 * **Épica 002 (parcial) – Muro:** el profesor publica anuncios; el apoderado ve solo los datos de sus pupilos, lee el muro, confirma recepción y comenta.
-* **Épica 002 – HU008:** falta mostrar al profesor quiénes confirmaron cada anuncio.
-* Pendiente: Épica 003 (agente IA conversacional y alertas tempranas), pruebas automatizadas, Docker y despliegue en AWS.
+* **Épica 002 – HU008:** el profesor ve quiénes confirmaron cada anuncio y cuántos faltan.
+* **Calidad (Sprint 5):** cada cambio se guarda junto con su auditoría en una sola transacción, la asistencia no acepta fechas futuras y el Administrador solo accede a la auditoría.
+* Pendiente: Épica 003 (agente IA conversacional y alertas tempranas), Docker y despliegue en AWS.
+
+### Pruebas y revisión del código
+```bash
+cd backend
+npm run lint   # ESLint
+npm test       # pruebas de la API sobre una base de datos en memoria
+```
+GitHub Actions ejecuta ambos, más la revisión de tipos del frontend, en cada push y Pull Request.
 * Fuera del alcance del PMV: agendamiento de reuniones, sistema de recompensas, horario y certificados.
 ## 👥 Integrantes del Equipo
 * *Fernando Pavez* - Líder de Proyecto / Desarrollador Backend y Datos.
