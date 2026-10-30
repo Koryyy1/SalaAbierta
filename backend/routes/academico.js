@@ -10,10 +10,18 @@ const ESTADOS_ASISTENCIA = ['presente', 'ausente', 'atrasado', 'justificado'];
 const TIPOS_ANOTACION = ['positiva', 'negativa', 'observacion'];
 const FECHA = /^\d{4}-\d{2}-\d{2}$/;
 
-const fechaValida = (valor) => FECHA.test(valor) && !Number.isNaN(Date.parse(valor));
+// Zona horaria del colegio: define qué día es "hoy" (por defecto, Chile continental)
+const ZONA_HORARIA = process.env.ZONA_HORARIA || 'America/Santiago';
+
+// Fecha real del calendario (rechaza, por ejemplo, 2026-02-30)
+const fechaValida = (valor) => {
+    if (typeof valor !== 'string' || !FECHA.test(valor)) return false;
+    const d = new Date(`${valor}T00:00:00Z`);
+    return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === valor;
+};
 const notaValida = (n) => typeof n === 'number' && n >= 1 && n <= 7 && Math.round(n * 10) === n * 10;
 const texto = (v, max) => (typeof v === 'string' && v.trim() && v.trim().length <= max ? v.trim() : null);
-const hoy = () => new Date().toISOString().slice(0, 10);
+const hoy = () => new Date().toLocaleDateString('en-CA', { timeZone: ZONA_HORARIA }); // AAAA-MM-DD
 const error = (res, status, mensaje) => res.status(status).json({ estado: 'Error', mensaje });
 
 const SELECT_NOTA =
@@ -66,6 +74,7 @@ router.get('/cursos/:cursoId/asistencia', requiereRol('Profesor'), guardiaCurso,
 router.put('/cursos/:cursoId/asistencia', requiereRol('Profesor'), guardiaCurso, async (req, res) => {
     const { fecha, registros } = req.body || {};
     if (!fechaValida(fecha)) return error(res, 400, 'Fecha inválida (use AAAA-MM-DD).');
+    if (fecha > hoy()) return error(res, 400, 'No se puede registrar asistencia en una fecha futura.');
     if (!Array.isArray(registros) || !registros.length) return error(res, 400, 'Debe enviar al menos un registro.');
     if (registros.some((r) => !ESTADOS_ASISTENCIA.includes(r?.estado) || !Number.isInteger(r?.alumno_id))) {
         return error(res, 400, 'Registro de asistencia inválido.');
@@ -75,24 +84,30 @@ router.put('/cursos/:cursoId/asistencia', requiereRol('Profesor'), guardiaCurso,
     const idsCurso = new Set(alumnos.map((a) => a.id));
     if (registros.some((r) => !idsCurso.has(r.alumno_id))) return error(res, 403, 'Hay alumnos que no pertenecen al curso.');
 
-    for (const { alumno_id, estado } of registros) {
-        const previo = (await pool.query("SELECT id, estado FROM asistencia WHERE alumno_id = $1 AND fecha = $2", [alumno_id, fecha])).rows[0];
-        if (previo?.estado === estado) continue;
+    // Todo el curso y su auditoría se guardan en una sola transacción: si algo falla, no se guarda nada
+    await pool.transaction(async (tx) => {
+        for (const { alumno_id, estado } of registros) {
+            const previo = (await tx.query('SELECT id, estado FROM asistencia WHERE alumno_id = $1 AND fecha = $2', [alumno_id, fecha])).rows[0];
+            if (previo?.estado === estado) continue;
 
-        const { rows } = await pool.query(
-            `INSERT INTO asistencia (alumno_id, fecha, estado) VALUES ($1, $2, $3)
-             ON CONFLICT (alumno_id, fecha) DO UPDATE SET estado = EXCLUDED.estado RETURNING id`,
-            [alumno_id, fecha, estado]
-        );
-        await registrarAuditoria({
-            usuarioId: req.user.id,
-            accion: previo ? 'UPDATE' : 'INSERT',
-            tabla: 'asistencia',
-            registroId: rows[0].id,
-            antes: previo ? { alumno_id, fecha, estado: previo.estado } : null,
-            despues: { alumno_id, fecha, estado },
-        });
-    }
+            const { rows } = await tx.query(
+                `INSERT INTO asistencia (alumno_id, fecha, estado) VALUES ($1, $2, $3)
+                 ON CONFLICT (alumno_id, fecha) DO UPDATE SET estado = EXCLUDED.estado RETURNING id`,
+                [alumno_id, fecha, estado]
+            );
+            await registrarAuditoria(
+                {
+                    usuarioId: req.user.id,
+                    accion: previo ? 'UPDATE' : 'INSERT',
+                    tabla: 'asistencia',
+                    registroId: rows[0].id,
+                    antes: previo ? { alumno_id, fecha, estado: previo.estado } : null,
+                    despues: { alumno_id, fecha, estado },
+                },
+                tx
+            );
+        }
+    });
     res.json({ estado: 'Éxito', mensaje: 'Asistencia guardada.' });
 });
 
@@ -125,13 +140,16 @@ router.post('/alumnos/:alumnoId/calificaciones', requiereRol('Profesor'), guardi
         return error(res, 400, 'Asignatura, descripción y nota (1.0 a 7.0) son obligatorias.');
     }
 
-    const { rows } = await pool.query(
-        `INSERT INTO calificaciones (alumno_id, asignatura, descripcion, nota, fecha, profesor_id)
-         VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-        [req.alumnoId, asignatura, descripcion, nota, hoy(), req.user.id]
-    );
-    const creada = (await pool.query(`${SELECT_NOTA} WHERE id = $1`, [rows[0].id])).rows[0];
-    await registrarAuditoria({ usuarioId: req.user.id, accion: 'INSERT', tabla: 'calificaciones', registroId: creada.id, despues: creada });
+    const creada = await pool.transaction(async (tx) => {
+        const { rows } = await tx.query(
+            `INSERT INTO calificaciones (alumno_id, asignatura, descripcion, nota, fecha, profesor_id)
+             VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+            [req.alumnoId, asignatura, descripcion, nota, hoy(), req.user.id]
+        );
+        const nueva = (await tx.query(`${SELECT_NOTA} WHERE id = $1`, [rows[0].id])).rows[0];
+        await registrarAuditoria({ usuarioId: req.user.id, accion: 'INSERT', tabla: 'calificaciones', registroId: nueva.id, despues: nueva }, tx);
+        return nueva;
+    });
     res.status(201).json({ estado: 'Éxito', dato: creada });
 });
 
@@ -147,9 +165,12 @@ router.put('/calificaciones/:id', requiereRol('Profesor'), async (req, res) => {
     const nota = req.body?.nota ?? previa.nota;
     if (!asignatura || !descripcion || !notaValida(nota)) return error(res, 400, 'Datos de calificación inválidos.');
 
-    await pool.query('UPDATE calificaciones SET asignatura = $1, descripcion = $2, nota = $3 WHERE id = $4', [asignatura, descripcion, nota, id]);
-    const actual = (await pool.query(`${SELECT_NOTA} WHERE id = $1`, [id])).rows[0];
-    await registrarAuditoria({ usuarioId: req.user.id, accion: 'UPDATE', tabla: 'calificaciones', registroId: id, antes: previa, despues: actual });
+    const actual = await pool.transaction(async (tx) => {
+        await tx.query('UPDATE calificaciones SET asignatura = $1, descripcion = $2, nota = $3 WHERE id = $4', [asignatura, descripcion, nota, id]);
+        const editada = (await tx.query(`${SELECT_NOTA} WHERE id = $1`, [id])).rows[0];
+        await registrarAuditoria({ usuarioId: req.user.id, accion: 'UPDATE', tabla: 'calificaciones', registroId: id, antes: previa, despues: editada }, tx);
+        return editada;
+    });
     res.json({ estado: 'Éxito', dato: actual });
 });
 
@@ -168,12 +189,15 @@ router.post('/alumnos/:alumnoId/anotaciones', requiereRol('Profesor'), guardiaAl
     const tipo = req.body?.tipo;
     if (!descripcion || !TIPOS_ANOTACION.includes(tipo)) return error(res, 400, 'Tipo y descripción son obligatorios.');
 
-    const { rows } = await pool.query(
-        'INSERT INTO anotaciones (alumno_id, tipo, descripcion, fecha, profesor_id) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-        [req.alumnoId, tipo, descripcion, hoy(), req.user.id]
-    );
-    const creada = (await pool.query(`${SELECT_ANOTACION} WHERE id = $1`, [rows[0].id])).rows[0];
-    await registrarAuditoria({ usuarioId: req.user.id, accion: 'INSERT', tabla: 'anotaciones', registroId: creada.id, despues: creada });
+    const creada = await pool.transaction(async (tx) => {
+        const { rows } = await tx.query(
+            'INSERT INTO anotaciones (alumno_id, tipo, descripcion, fecha, profesor_id) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+            [req.alumnoId, tipo, descripcion, hoy(), req.user.id]
+        );
+        const nueva = (await tx.query(`${SELECT_ANOTACION} WHERE id = $1`, [rows[0].id])).rows[0];
+        await registrarAuditoria({ usuarioId: req.user.id, accion: 'INSERT', tabla: 'anotaciones', registroId: nueva.id, despues: nueva }, tx);
+        return nueva;
+    });
     res.status(201).json({ estado: 'Éxito', dato: creada });
 });
 

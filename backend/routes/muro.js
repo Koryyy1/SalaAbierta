@@ -35,18 +35,18 @@ router.post('/cursos/:cursoId/anuncios', requiereRol('Profesor'), guardiaCurso, 
     const contenido = texto(req.body?.contenido, 2000);
     if (!titulo || !contenido) return error(res, 400, 'Título y contenido son obligatorios.');
 
-    const { rows } = await pool.query(
-        'INSERT INTO anuncios (curso_id, autor_id, titulo, contenido) VALUES ($1, $2, $3, $4) RETURNING id',
-        [req.cursoId, req.user.id, titulo, contenido]
-    );
-    await registrarAuditoria({
-        usuarioId: req.user.id,
-        accion: 'INSERT',
-        tabla: 'anuncios',
-        registroId: rows[0].id,
-        despues: { curso_id: req.cursoId, titulo, contenido },
+    const id = await pool.transaction(async (tx) => {
+        const { rows } = await tx.query(
+            'INSERT INTO anuncios (curso_id, autor_id, titulo, contenido) VALUES ($1, $2, $3, $4) RETURNING id',
+            [req.cursoId, req.user.id, titulo, contenido]
+        );
+        await registrarAuditoria(
+            { usuarioId: req.user.id, accion: 'INSERT', tabla: 'anuncios', registroId: rows[0].id, despues: { curso_id: req.cursoId, titulo, contenido } },
+            tx
+        );
+        return rows[0].id;
     });
-    res.status(201).json({ estado: 'Éxito', id: rows[0].id });
+    res.status(201).json({ estado: 'Éxito', id });
 });
 
 // Carga el anuncio y valida que el usuario tenga acceso a su curso
