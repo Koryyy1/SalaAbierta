@@ -17,6 +17,7 @@ const privadas = [
   'apoderado/asistencia',
   'apoderado/notas',
   'apoderado/anotaciones',
+  'apoderado/asistente',
   'admin/auditoria',
 ] as const;
 
