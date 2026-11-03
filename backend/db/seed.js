@@ -2,9 +2,11 @@ const bcrypt = require('bcryptjs');
 
 const ROLES = ['Profesor', 'Apoderado', 'Administrador'];
 
+// Fecha AAAA-MM-DD de hace n días, en la zona horaria del colegio (la misma que usa la API para "hoy")
 function diasAtras(n) {
-    const d = new Date();
-    d.setDate(d.getDate() - n);
+    const hoy = new Date().toLocaleDateString('en-CA', { timeZone: process.env.ZONA_HORARIA || 'America/Santiago' });
+    const d = new Date(`${hoy}T12:00:00Z`);
+    d.setUTCDate(d.getUTCDate() - n);
     return d.toISOString().slice(0, 10);
 }
 
