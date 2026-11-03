@@ -23,7 +23,15 @@ jobs:
           cache-dependency-path: backend/package-lock.json
       - run: npm install --no-audit --no-fund
       - run: npm run lint
-      - run: npm test
+      - name: Pruebas
+        run: npm test 2>&1 | tee pruebas.log
+        shell: bash -o pipefail {0}
+      # Si alguna prueba falla, resume el error como anotación visible en la pestaña Checks del PR
+      - name: Resumen de pruebas fallidas
+        if: failure()
+        run: |
+          resumen=$(grep -E -A12 "^ *not ok|AssertionError|Error:" pruebas.log | head -120 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
+          echo "::error title=Pruebas fallidas::${resumen}"
 
   frontend:
     name: Frontend · revisión de tipos
