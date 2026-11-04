@@ -269,7 +269,27 @@ router.get('/auditoria', requiereRol('Administrador'), async (req, res) => {
          ORDER BY a.fecha DESC, a.id DESC LIMIT 200`,
         params
     );
-    res.json({ estado: 'Éxito', datos: rows });
+
+    // Vista simple para la dirección: se agregan los nombres del alumno y del curso afectados
+    const dato = (r, campo) => r.datos_despues?.[campo] ?? r.datos_antes?.[campo] ?? null;
+    const idsAlumnos = [...new Set(rows.map((r) => dato(r, 'alumno_id')).filter(Number.isInteger))];
+    const idsCursos = [...new Set(rows.map((r) => dato(r, 'curso_id')).filter(Number.isInteger))];
+    const alumnos = new Map(
+        idsAlumnos.length
+            ? (await pool.query('SELECT id, nombre FROM alumnos WHERE id = ANY($1::int[])', [idsAlumnos])).rows.map((a) => [a.id, a.nombre])
+            : []
+    );
+    const cursos = new Map(
+        idsCursos.length
+            ? (await pool.query('SELECT id, nombre FROM cursos WHERE id = ANY($1::int[])', [idsCursos])).rows.map((c) => [c.id, c.nombre])
+            : []
+    );
+    const datos = rows.map((r) => ({
+        ...r,
+        alumno: alumnos.get(dato(r, 'alumno_id')) ?? null,
+        curso: cursos.get(dato(r, 'curso_id')) ?? null,
+    }));
+    res.json({ estado: 'Éxito', datos });
 });
 
 module.exports = router;

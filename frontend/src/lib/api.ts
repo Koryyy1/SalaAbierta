@@ -31,6 +31,8 @@ export type RegistroAuditoria = {
   datos_antes: Record<string, unknown> | null;
   datos_despues: Record<string, unknown> | null;
   fecha: string;
+  alumno: string | null;
+  curso: string | null;
 };
 export type RespuestaAgente = {
   respuesta: string;

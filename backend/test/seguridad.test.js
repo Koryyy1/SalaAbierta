@@ -38,3 +38,10 @@ test('solo el Administrador consulta la auditoría', async () => {
 test('rechaza identificadores inválidos (400)', async () => {
     assert.equal((await api(profesor).get('/api/alumnos/abc/calificaciones')).status, 400);
 });
+
+test('la auditoría incluye el nombre del alumno afectado para la vista simple', async () => {
+    await api(profesor).post('/api/alumnos/1/anotaciones', { tipo: 'positiva', descripcion: 'Ayudó a ordenar la sala.' });
+    const registro = (await api(admin).get('/api/auditoria?tabla=anotaciones')).body.datos[0];
+    assert.equal(registro.alumno, 'Sofía Rojas');
+    assert.equal(registro.usuario, 'Marcela Soto');
+});
