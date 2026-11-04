@@ -1,11 +1,26 @@
 // Aplicación Express sin iniciar el servidor: la usan index.js y las pruebas automatizadas
 const express = require('express');
 const cors = require('cors');
-const pool = require('./config/db'); // Módulo de conexión a la BD
 
 const app = express();
 
-app.use(cors());
+// T7: CORS restringido. En producción solo se aceptan los orígenes de CORS_ORIGINS (separados por coma).
+// En desarrollo se aceptan localhost y la red local (192.168.x.x, 10.x.x.x, 172.16-31.x.x).
+// Las apps nativas (Expo Go, APK) no envían Origin y no se ven afectadas.
+const origenesPermitidos = (process.env.CORS_ORIGINS || '')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+const RED_LOCAL = /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)(:\d+)?$/;
+app.use(
+    cors({
+        origin: (origen, listo) => {
+            const permitido =
+                !origen || origenesPermitidos.includes(origen) || (process.env.NODE_ENV !== 'production' && RED_LOCAL.test(origen));
+            listo(null, permitido);
+        },
+    })
+);
 app.use(express.json());
 
 // Health check
@@ -16,12 +31,6 @@ app.get('/api/holamundo', (req, res) => {
         version: '1.0.0',
         desarrollador: 'Fernando Pavez',
     });
-});
-
-// Roles definidos en el sistema
-app.get('/api/roles', async (req, res) => {
-    const resultado = await pool.query('SELECT id, nombre FROM roles ORDER BY id');
-    res.status(200).json({ estado: 'Éxito', cantidad: resultado.rowCount, datos: resultado.rows });
 });
 
 app.use('/api/auth', require('./routes/auth'));

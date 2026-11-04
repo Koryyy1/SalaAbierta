@@ -42,5 +42,5 @@ const styles = StyleSheet.create({
   titulo: { fontSize: 15, fontWeight: '800', textTransform: 'uppercase' },
   alumno: { color: colors.ink, fontSize: 18, fontWeight: '800' },
   detalle: { color: colors.ink, fontSize: 16 },
-  fecha: { color: '#6b4a36', fontSize: 14 },
+  fecha: { color: colors.textoSecundario, fontSize: 14 },
 });

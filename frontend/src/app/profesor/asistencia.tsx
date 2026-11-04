@@ -8,11 +8,11 @@ import {
   colorEstado,
   CourseScreen,
   Empty,
-  Field,
   hoyISO,
   Loading,
   messageOf,
   Notice,
+  SelectorFecha,
   useAsync,
 } from '@/components/ui';
 import { api, type EstadoAsistencia } from '@/lib/api';
@@ -59,7 +59,7 @@ function Pasar({ cursoId }: { cursoId: number }) {
   return (
     <>
       <Card>
-        <Field label="Fecha (AAAA-MM-DD)" value={fecha} onChangeText={setFecha} autoCapitalize="none" />
+        <SelectorFecha value={fecha} onChange={setFecha} max={hoyISO()} />
         {!fechaOk && <Notice text="Fecha inválida." />}
         {esFutura && <Notice text="No se puede registrar asistencia en una fecha futura." />}
       </Card>

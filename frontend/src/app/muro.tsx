@@ -76,7 +76,7 @@ function AnuncioCard({ anuncio, esApoderado, onChange }: { anuncio: Anuncio; esA
   return (
     <Card>
       <Text style={{ color: colors.ink, fontSize: 17, fontWeight: '800' }}>{anuncio.titulo}</Text>
-      <Text style={{ color: '#7a5640', fontSize: 12 }}>
+      <Text style={{ color: colors.textoSecundario, fontSize: 14 }}>
         {anuncio.autor} · {formatFecha(anuncio.creado_en)}
       </Text>
       <Text style={{ color: colors.ink, fontSize: 15 }}>{anuncio.contenido}</Text>
