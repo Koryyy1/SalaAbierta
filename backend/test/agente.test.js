@@ -29,6 +29,29 @@ test('HU009: responde el promedio del pupilo con sus datos reales y deriva a Not
     assert.ok(res.body.respuesta.includes(notas.promedio.toLocaleString('es-CL', { minimumFractionDigits: 1 })));
 });
 
+test('Sali: se presenta con su personalidad y sugiere preguntas de seguimiento', async () => {
+    const { INSTRUCCIONES } = require('../services/agente');
+    assert.match(INSTRUCCIONES, /Eres Sali/);
+    assert.match(INSTRUCCIONES, /"usted"/);
+    const res = await preguntar(apoderado, '¿Qué porcentaje de asistencia tiene?');
+    assert.ok(Array.isArray(res.body.sugerencias) && res.body.sugerencias.length >= 2);
+});
+
+test('Sali: ante un promedio bajo responde con empatía y un paso concreto', () => {
+    const { respuestaBasica } = require('../services/agente');
+    const datos = { notas: [{ asignatura: 'Matemática', nota: 3.6 }, { asignatura: 'Ciencias', nota: 3.8 }], promedio: 3.7, asistencia: [], anotaciones: [], anuncios: [] };
+    const texto = respuestaBasica('notas', { nombre: 'Benjamín Pérez' }, datos, [], '¿Cómo van sus notas?');
+    assert.match(texto, /un poco bajo la nota de aprobación/);
+    assert.match(texto, /profesor jefe/);
+});
+
+test('Sali: quita el formato Markdown de las respuestas del modelo', async () => {
+    process.env.GEMINI_API_KEY = 'clave-de-prueba';
+    global.fetch = async () => ({ ok: true, json: async () => ({ candidates: [{ content: { parts: [{ text: '**¡[ESTUDIANTE] va muy bien!**' }] } }] }) });
+    const res = await preguntar(apoderado, '¿Cómo va en sus notas?');
+    assert.equal(res.body.respuesta, '¡Sofía va muy bien!');
+});
+
 test('HU009: no entrega datos de un estudiante que no es su pupilo', async () => {
     const res = await preguntar(apoderado, '¿Cuáles son las notas de Mateo?');
     assert.equal(res.status, 200);
