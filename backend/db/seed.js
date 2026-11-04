@@ -49,7 +49,11 @@ module.exports = async function seed(db) {
     }
 
     const { rows: existentes } = await db.query('SELECT 1 FROM usuarios LIMIT 1');
-    if (existentes.length) return asignarAsignaturasDemo(db);
+    if (existentes.length) {
+        // Bases creadas antes: el usuario de demostración de la dirección pasa a tener nombre de persona
+        await db.query("UPDATE usuarios SET nombre = 'Patricia Vidal' WHERE email = 'admin@salaabierta.cl' AND nombre = 'Administrador'");
+        return asignarAsignaturasDemo(db);
+    }
 
     const rolId = async (nombre) => (await db.query('SELECT id FROM roles WHERE nombre = $1', [nombre])).rows[0].id;
     const insertar = async (sql, params) => (await db.query(sql + ' RETURNING id', params)).rows[0].id;
@@ -65,7 +69,7 @@ module.exports = async function seed(db) {
     const profesor = await usuario('Marcela Soto', 'profesor@salaabierta.cl', 'profesor123', 'Profesor');
     const apoderado1 = await usuario('Carolina Rojas', 'apoderado@salaabierta.cl', 'apoderado123', 'Apoderado');
     const apoderado2 = await usuario('Luis Fuentes', 'apoderado2@salaabierta.cl', 'apoderado123', 'Apoderado');
-    await usuario('Administrador', 'admin@salaabierta.cl', 'admin123', 'Administrador');
+    await usuario('Patricia Vidal', 'admin@salaabierta.cl', 'admin123', 'Administrador'); // directora del colegio
 
     const curso = await insertar('INSERT INTO cursos (nombre) VALUES ($1)', ['5° Básico A']);
     const curso2 = await insertar('INSERT INTO cursos (nombre) VALUES ($1)', ['6° Básico B']);

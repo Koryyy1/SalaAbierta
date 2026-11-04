@@ -36,6 +36,7 @@ app.get('/api/holamundo', (req, res) => {
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api', require('./routes/academico')); // Épica 001: gestión académica y evaluativa
 app.use('/api', require('./routes/muro')); // Épica 002: muro de comunicación
+app.use('/api', require('./routes/resumen')); // Inicio del apoderado y resumen de la dirección
 app.use('/api', require('./routes/alertas')); // Épica 003: alertas tempranas (HU010)
 app.use('/api/agente', require('./routes/agente')); // Épica 003: agente IA conversacional (HU009)
 
