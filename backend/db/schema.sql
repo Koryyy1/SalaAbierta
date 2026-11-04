@@ -118,3 +118,13 @@ CREATE TABLE IF NOT EXISTS alertas (
 );
 -- Índice único parcial: a lo más una alerta activa por alumno y tipo (evita duplicados)
 CREATE UNIQUE INDEX IF NOT EXISTS alertas_activas_unicas ON alertas (alumno_id, tipo) WHERE resuelta_en IS NULL;
+
+-- T8: la auditoría es de solo agregar. Cualquier UPDATE o DELETE sobre ella se rechaza en la propia base de datos.
+CREATE OR REPLACE FUNCTION auditoria_inmutable() RETURNS trigger AS $$
+BEGIN
+    RAISE EXCEPTION 'La tabla auditoria no se puede modificar ni borrar (solo INSERT y SELECT).';
+END;
+$$ LANGUAGE plpgsql;
+CREATE OR REPLACE TRIGGER auditoria_sin_cambios
+    BEFORE UPDATE OR DELETE ON auditoria
+    FOR EACH ROW EXECUTE FUNCTION auditoria_inmutable();

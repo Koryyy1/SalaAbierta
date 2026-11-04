@@ -58,14 +58,20 @@ npm run web
 | Profesor | profesor@salaabierta.cl | profesor123 |
 | Apoderado (1 pupilo) | apoderado@salaabierta.cl | apoderado123 |
 | Apoderado (2 pupilos) | apoderado2@salaabierta.cl | apoderado123 |
-| Administrador (auditoría vía API) | admin@salaabierta.cl | admin123 |
+| Administrador (auditoría y umbrales de alerta) | admin@salaabierta.cl | admin123 |
 
 ### Alcance implementado
 * **Épica 001 – Gestión académica:** el profesor pasa asistencia, registra y edita notas y anotaciones; todo cambio queda en la tabla `auditoria` (`GET /api/auditoria`, rol Administrador).
-* **Épica 002 (parcial) – Muro:** el profesor publica anuncios; el apoderado ve solo los datos de sus pupilos, lee el muro, confirma recepción y comenta.
-* **Épica 002 – HU008:** el profesor ve quiénes confirmaron cada anuncio y cuántos faltan.
-* **Calidad (Sprint 5):** cada cambio se guarda junto con su auditoría en una sola transacción, la asistencia no acepta fechas futuras y el Administrador solo accede a la auditoría.
-* Pendiente: Épica 003 (agente IA conversacional y alertas tempranas), Docker y despliegue en AWS.
+* **Épica 002 – Muro:** el profesor publica anuncios; el apoderado ve solo los datos de sus pupilos, lee el muro, confirma recepción y comenta; el profesor ve quiénes confirmaron cada anuncio y cuántos faltan.
+* **Épica 003 – HU009 Asistente IA:** el apoderado pregunta en lenguaje natural por notas, asistencia, anotaciones, anuncios o dudas de uso (RAG con Google Gemini; sin `GEMINI_API_KEY` responde en modo básico). El modelo nunca accede a la base de datos ni recibe nombres.
+* **Épica 003 – HU010 Alertas tempranas:** el profesor ve alertas cuando un alumno baja de promedio 4,0 o de 85 % de asistencia; el Administrador configura los umbrales.
+* **Calidad y seguridad:** cada cambio se guarda junto con su auditoría en una sola transacción; la auditoría no se puede modificar ni borrar; límite de intentos fallidos de inicio de sesión; CORS restringido; JWT_SECRET obligatorio en producción; textos de 14 a 16 pt, zonas táctiles de 48 dp y selector de fecha sin escribir.
+* Pendiente: Docker y despliegue en AWS con HTTPS.
+* Fuera del alcance del PMV: agendamiento de reuniones, sistema de recompensas, horario y certificados.
+
+### Producción
+* Definir `NODE_ENV=production`, `JWT_SECRET` y `CORS_ORIGINS` (ver `backend/.env.example`).
+* Ejecutar `backend/db/permisos-produccion.sql` para que la app use un usuario de base de datos sin permisos de UPDATE ni DELETE sobre la auditoría.
 
 ### Pruebas y revisión del código
 ```bash
@@ -74,7 +80,7 @@ npm run lint   # ESLint
 npm test       # pruebas de la API sobre una base de datos en memoria
 ```
 GitHub Actions ejecuta ambos, más la revisión de tipos del frontend, en cada push y Pull Request.
-* Fuera del alcance del PMV: agendamiento de reuniones, sistema de recompensas, horario y certificados.
+
 ## 👥 Integrantes del Equipo
 * *Fernando Pavez* - Líder de Proyecto / Desarrollador Backend y Datos.
 * *Catalina Aguilar* - Arquitecta de Software / Desarrolladora Frontend Móvil.

@@ -108,6 +108,6 @@ const styles = StyleSheet.create({
   asistente: { alignSelf: 'flex-start', backgroundColor: colors.sand },
   textoPropio: { color: colors.white, fontSize: 15, fontWeight: '600' },
   textoAsistente: { color: colors.ink, fontSize: 16, lineHeight: 22 },
-  aviso: { color: colors.warn, fontSize: 13, fontWeight: '700' },
-  modo: { color: '#7a5640', fontSize: 11 },
+  aviso: { color: colors.warn, fontSize: 14, fontWeight: '700' },
+  modo: { color: colors.textoSecundario, fontSize: 14 },
 });

@@ -25,7 +25,8 @@ export const colors = {
   white: '#ffffff',
   danger: '#b3261e',
   ok: '#2e7d32',
-  warn: '#b26a00',
+  warn: '#8a5200', // oscurecido para contraste 4,5:1 sobre el fondo arena (WCAG AA)
+  textoSecundario: '#5d3b2b',
 };
 
 export function messageOf(e: unknown) {
@@ -246,6 +247,48 @@ export const hoyISO = () => {
   return `${d.getFullYear()}-${mes}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
+// Suma (o resta) días a una fecha AAAA-MM-DD sin problemas de zona horaria
+export const sumarDias = (iso: string, dias: number) => {
+  const d = new Date(`${iso}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + dias);
+  return d.toISOString().slice(0, 10);
+};
+
+const DIAS_SEMANA = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+const diaSemana = (iso: string) => DIAS_SEMANA[new Date(`${iso}T12:00:00Z`).getUTCDay()];
+
+// T9: selector de fecha sin escribir formatos. Avanza o retrocede de a un día y no pasa de "max".
+export function SelectorFecha({ value, onChange, max }: { value: string; onChange: (iso: string) => void; max?: string }) {
+  const puedeAvanzar = !max || value < max;
+  return (
+    <View style={{ gap: 8 }}>
+      <Text style={styles.label}>Fecha</Text>
+      <View style={styles.selector}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Día anterior"
+          onPress={() => onChange(sumarDias(value, -1))}
+          style={styles.flecha}>
+          <Text style={styles.flechaTexto}>‹</Text>
+        </Pressable>
+        <View style={{ alignItems: 'center', flex: 1 }}>
+          <Text style={styles.fechaGrande}>{formatFecha(value)}</Text>
+          <Text style={styles.fechaDia}>{value === hoyISO() ? 'hoy' : diaSemana(value)}</Text>
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Día siguiente"
+          disabled={!puedeAvanzar}
+          onPress={() => onChange(sumarDias(value, 1))}
+          style={[styles.flecha, !puedeAvanzar && { opacity: 0.35 }]}>
+          <Text style={styles.flechaTexto}>›</Text>
+        </Pressable>
+      </View>
+      {value !== hoyISO() && <Button label="Volver a hoy" tone="secondary" onPress={() => onChange(hoyISO())} />}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.white },
   topBar: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12, gap: 6 },
@@ -262,10 +305,19 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   card: { backgroundColor: colors.sand, borderRadius: 18, gap: 10, padding: 16 },
-  button: { alignItems: 'center', backgroundColor: colors.orange, borderRadius: 14, paddingVertical: 13, paddingHorizontal: 18 },
+  // T9: zonas táctiles de al menos 48 dp
+  button: {
+    alignItems: 'center',
+    backgroundColor: colors.orange,
+    borderRadius: 14,
+    justifyContent: 'center',
+    minHeight: 48,
+    paddingVertical: 13,
+    paddingHorizontal: 18,
+  },
   buttonSecondary: { backgroundColor: 'transparent', borderColor: colors.brown, borderWidth: 1.5 },
-  buttonText: { color: '#1a1006', fontSize: 15, fontWeight: '800' },
-  label: { color: colors.brown, fontSize: 12, fontWeight: '800', textTransform: 'uppercase' },
+  buttonText: { color: '#1a1006', fontSize: 16, fontWeight: '800' },
+  label: { color: colors.brown, fontSize: 14, fontWeight: '800', textTransform: 'uppercase' },
   input: {
     backgroundColor: colors.white,
     borderRadius: 12,
@@ -280,10 +332,17 @@ const styles = StyleSheet.create({
     borderColor: colors.sand,
     borderRadius: 999,
     borderWidth: 1.5,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
+    justifyContent: 'center',
+    minHeight: 48,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
-  chipText: { color: colors.brown, fontSize: 13, fontWeight: '700' },
-  empty: { color: colors.sand, fontSize: 14, textAlign: 'center', marginVertical: 12 },
-  logout: { color: colors.brown, fontSize: 12, fontWeight: '800', textDecorationLine: 'underline' },
+  chipText: { color: colors.brown, fontSize: 15, fontWeight: '700' },
+  empty: { color: colors.sand, fontSize: 16, textAlign: 'center', marginVertical: 12 },
+  logout: { color: colors.brown, fontSize: 14, fontWeight: '800', textDecorationLine: 'underline' },
+  selector: { alignItems: 'center', backgroundColor: colors.white, borderRadius: 14, flexDirection: 'row', gap: 8, padding: 6 },
+  flecha: { alignItems: 'center', backgroundColor: colors.sand, borderRadius: 12, height: 48, justifyContent: 'center', width: 56 },
+  flechaTexto: { color: colors.brown, fontSize: 28, fontWeight: '800', lineHeight: 30 },
+  fechaGrande: { color: colors.ink, fontSize: 20, fontWeight: '800' },
+  fechaDia: { color: colors.brown, fontSize: 14, fontWeight: '700', textTransform: 'capitalize' },
 });

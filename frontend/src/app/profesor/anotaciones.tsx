@@ -64,7 +64,7 @@ function AnotacionesAlumno({ alumnoId }: { alumnoId: number }) {
           <Card key={a.id}>
             <Text style={{ color: t.color, fontWeight: '800' }}>{t.texto}</Text>
             <Text style={{ color: colors.ink, fontSize: 15 }}>{a.descripcion}</Text>
-            <Text style={{ color: '#7a5640', fontSize: 12 }}>{formatFecha(a.fecha)}</Text>
+            <Text style={{ color: colors.textoSecundario, fontSize: 14 }}>{formatFecha(a.fecha)}</Text>
           </Card>
         );
       })}

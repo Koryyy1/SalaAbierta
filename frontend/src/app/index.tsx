@@ -16,8 +16,6 @@ const menuApoderado: MenuItem[] = [
   { label: 'Anotaciones', initial: 'A', href: '/apoderado/anotaciones' },
   { label: 'Muro del curso', initial: 'M', href: '/muro' },
   { label: 'Asistencia', initial: 'A', href: '/apoderado/asistencia' },
-  { label: 'Horario', initial: 'H' },
-  { label: 'Certificados', initial: 'C' },
 ];
 
 const menuProfesor: MenuItem[] = [
@@ -118,8 +116,8 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   eyebrow: {
-    color: '#a2795c',
-    fontSize: 11,
+    color: '#7a5640',
+    fontSize: 14,
     fontWeight: '700',
     letterSpacing: 1.2,
     marginBottom: 4,
@@ -229,7 +227,7 @@ const styles = StyleSheet.create({
   },
   chatbotText: {
     color: '#2c1a10',
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: '600',
     marginBottom: 2,
   },
@@ -247,8 +245,8 @@ const styles = StyleSheet.create({
     opacity: 0.55,
   },
   soon: {
-    color: '#7a5640',
-    fontSize: 11,
+    color: '#5d3b2b',
+    fontSize: 14,
     fontWeight: '600',
   },
 });

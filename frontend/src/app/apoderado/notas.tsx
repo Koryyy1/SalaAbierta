@@ -1,6 +1,6 @@
 import { Text } from 'react-native';
 
-import { Card, Empty, formatFecha, Loading, Notice, PupilScreen, useAsync } from '@/components/ui';
+import { Card, colors, Empty, formatFecha, Loading, Notice, PupilScreen, useAsync } from '@/components/ui';
 import { api } from '@/lib/api';
 
 function Notas({ alumnoId }: { alumnoId: number }) {
@@ -22,7 +22,7 @@ function Notas({ alumnoId }: { alumnoId: number }) {
             {n.asignatura} · {n.nota.toFixed(1)}
           </Text>
           <Text style={{ color: '#5d3b2b' }}>{n.descripcion}</Text>
-          <Text style={{ color: '#7a5640', fontSize: 12 }}>{formatFecha(n.fecha)}</Text>
+          <Text style={{ color: colors.textoSecundario, fontSize: 14 }}>{formatFecha(n.fecha)}</Text>
         </Card>
       ))}
     </>

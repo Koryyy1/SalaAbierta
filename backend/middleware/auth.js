@@ -1,6 +1,10 @@
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 
+// En producción el secreto es obligatorio: sin él, cualquiera podría firmar tokens válidos
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET es obligatorio en producción. Defínalo en las variables de entorno.');
+}
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-sala-abierta-cambiar-en-produccion';
 if (!process.env.JWT_SECRET) {
     console.warn('⚠️  JWT_SECRET no definido: usando secreto de desarrollo.');
