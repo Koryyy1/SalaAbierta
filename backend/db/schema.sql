@@ -128,3 +128,17 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE TRIGGER auditoria_sin_cambios
     BEFORE UPDATE OR DELETE ON auditoria
     FOR EACH ROW EXECUTE FUNCTION auditoria_inmutable();
+
+-- Asignaturas del colegio y cuáles imparte cada profesor en cada curso.
+-- Al registrar una nota, el profesor solo puede elegir entre sus asignaturas del curso.
+CREATE TABLE IF NOT EXISTS asignaturas (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(80) UNIQUE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS profesor_asignaturas (
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+    curso_id INTEGER NOT NULL REFERENCES cursos(id),
+    asignatura_id INTEGER NOT NULL REFERENCES asignaturas(id),
+    PRIMARY KEY (usuario_id, curso_id, asignatura_id)
+);

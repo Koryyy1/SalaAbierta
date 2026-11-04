@@ -123,6 +123,8 @@ export const api = {
 
   cursos: () => request<Lista<Curso>>('GET', '/cursos').then((r) => r.datos),
   alumnosDeCurso: (cursoId: number) => request<Lista<Alumno>>('GET', `/cursos/${cursoId}/alumnos`).then((r) => r.datos),
+  asignaturasCurso: (cursoId: number) =>
+    request<Lista<{ id: number; nombre: string }>>('GET', `/cursos/${cursoId}/asignaturas`).then((r) => r.datos),
   pupilos: () => request<Lista<Alumno>>('GET', '/apoderado/alumnos').then((r) => r.datos),
 
   asistenciaCurso: (cursoId: number, fecha: string) =>

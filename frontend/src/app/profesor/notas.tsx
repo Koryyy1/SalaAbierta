@@ -4,6 +4,7 @@ import { Text, View } from 'react-native';
 import {
   Button,
   Card,
+  Chip,
   colors,
   CourseScreen,
   Empty,
@@ -62,8 +63,10 @@ function FilaNota({ nota, onSaved }: { nota: Calificacion; onSaved: () => void }
   );
 }
 
-function NotasAlumno({ alumnoId }: { alumnoId: number }) {
+function NotasAlumno({ alumnoId, cursoId }: { alumnoId: number; cursoId: number }) {
   const { data, error, loading, reload } = useAsync(() => api.calificaciones(alumnoId), [alumnoId]);
+  // Solo las asignaturas que el profesor imparte en este curso: se eligen, no se escriben
+  const { data: asignaturas, error: errorAsignaturas } = useAsync(() => api.asignaturasCurso(cursoId), [cursoId]);
   const [asignatura, setAsignatura] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [nota, setNota] = useState('');
@@ -71,12 +74,12 @@ function NotasAlumno({ alumnoId }: { alumnoId: number }) {
 
   const crear = async () => {
     const n = parseNota(nota);
-    if (!asignatura.trim() || !descripcion.trim() || !notaOk(n)) {
-      return setFormError('Completa asignatura, descripción y una nota entre 1.0 y 7.0.');
+    if (!asignatura) return setFormError('Elige la asignatura.');
+    if (!descripcion.trim() || !notaOk(n)) {
+      return setFormError('Completa la descripción y una nota entre 1.0 y 7.0.');
     }
     try {
-      await api.crearCalificacion(alumnoId, { asignatura: asignatura.trim(), descripcion: descripcion.trim(), nota: n });
-      setAsignatura('');
+      await api.crearCalificacion(alumnoId, { asignatura, descripcion: descripcion.trim(), nota: n });
       setDescripcion('');
       setNota('');
       setFormError(null);
@@ -90,7 +93,16 @@ function NotasAlumno({ alumnoId }: { alumnoId: number }) {
     <>
       <Card>
         <Text style={{ color: colors.brown, fontWeight: '800' }}>NUEVA CALIFICACIÓN</Text>
-        <Field label="Asignatura" value={asignatura} onChangeText={setAsignatura} />
+        <Text style={{ color: colors.brown, fontSize: 14, fontWeight: '800' }}>ASIGNATURA</Text>
+        <Notice text={errorAsignaturas} />
+        {asignaturas && !asignaturas.length && (
+          <Text style={{ color: colors.ink }}>No tienes asignaturas asignadas en este curso. Consulta con la administración.</Text>
+        )}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          {asignaturas?.map((a) => (
+            <Chip key={a.id} label={a.nombre} selected={asignatura === a.nombre} onPress={() => setAsignatura(a.nombre)} />
+          ))}
+        </View>
         <Field label="Descripción" value={descripcion} onChangeText={setDescripcion} />
         <Field label="Nota (1.0 - 7.0)" value={nota} onChangeText={setNota} keyboardType="decimal-pad" />
         <Notice text={formError} />
@@ -111,7 +123,7 @@ export default function NotasProfesor() {
     <CourseScreen title="Registrar notas">
       {(curso) => (
         <StudentPicker key={curso.id} cursoId={curso.id}>
-          {(alumno) => <NotasAlumno key={alumno.id} alumnoId={alumno.id} />}
+          {(alumno) => <NotasAlumno key={alumno.id} alumnoId={alumno.id} cursoId={curso.id} />}
         </StudentPicker>
       )}
     </CourseScreen>
