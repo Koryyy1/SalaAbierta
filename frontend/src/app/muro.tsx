@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Text } from 'react-native';
 
 import {
   Button,
@@ -14,9 +13,11 @@ import {
   Notice,
   PupilScreen,
   useAsync,
+  useToast,
 } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { api, type Anuncio, type DetalleConfirmaciones } from '@/lib/api';
+import { Text } from '@/components/texto';
 
 // HU008: el profesor ve quiénes confirmaron la recepción del anuncio y quiénes faltan
 function DetalleConfirmacionesView({ anuncioId }: { anuncioId: number }) {
@@ -55,6 +56,7 @@ function DetalleConfirmacionesView({ anuncioId }: { anuncioId: number }) {
 function AnuncioCard({ anuncio, esApoderado, onChange }: { anuncio: Anuncio; esApoderado: boolean; onChange: () => void }) {
   const [comentario, setComentario] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
 
   const ejecutar = async (accion: () => Promise<unknown>) => {
     try {
@@ -70,6 +72,7 @@ function AnuncioCard({ anuncio, esApoderado, onChange }: { anuncio: Anuncio; esA
     comentario.trim() &&
     ejecutar(async () => {
       await api.comentarAnuncio(anuncio.id, comentario.trim());
+      toast('Comentario enviado');
       setComentario('');
     });
 
@@ -94,7 +97,14 @@ function AnuncioCard({ anuncio, esApoderado, onChange }: { anuncio: Anuncio; esA
         (anuncio.confirmado ? (
           <Text style={{ color: colors.ok, fontWeight: '800' }}>✓ Recepción confirmada</Text>
         ) : (
-          <Button label="Confirmar recepción" onPress={() => ejecutar(() => api.confirmarAnuncio(anuncio.id))} />
+          <Button
+            label="Confirmar recepción"
+            icono="ok"
+            onPress={() => ejecutar(async () => {
+              await api.confirmarAnuncio(anuncio.id);
+              toast('Recepción confirmada');
+            })}
+          />
         ))}
 
       {anuncio.comentarios.map((c) => (
@@ -116,11 +126,13 @@ function Muro({ cursoId, esApoderado }: { cursoId: number; esApoderado: boolean 
   const [titulo, setTitulo] = useState('');
   const [contenido, setContenido] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
+  const toast = useToast();
 
   const publicar = async () => {
     if (!titulo.trim() || !contenido.trim()) return setFormError('Completa título y contenido.');
     try {
       await api.crearAnuncio(cursoId, { titulo: titulo.trim(), contenido: contenido.trim() });
+      toast('Anuncio publicado');
       setTitulo('');
       setContenido('');
       setFormError(null);

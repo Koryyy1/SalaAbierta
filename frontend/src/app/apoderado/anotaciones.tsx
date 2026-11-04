@@ -1,7 +1,7 @@
-import { Text } from 'react-native';
 
 import { Card, colors, Empty, formatFecha, Loading, Notice, PupilScreen, useAsync } from '@/components/ui';
 import { api, type TipoAnotacion } from '@/lib/api';
+import { Text } from '@/components/texto';
 
 const etiqueta: Record<TipoAnotacion, { texto: string; color: string }> = {
   positiva: { texto: 'Positiva', color: colors.ok },

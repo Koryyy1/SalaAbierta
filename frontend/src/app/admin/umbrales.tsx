@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Text } from 'react-native';
 
-import { Button, Card, colors, Field, Loading, messageOf, Notice, Screen, useAsync } from '@/components/ui';
+import { Button, Card, colors, Field, Loading, messageOf, Notice, Screen, useAsync, useToast } from '@/components/ui';
 import { api } from '@/lib/api';
+import { Text } from '@/components/texto';
 
 // HU010: el Administrador configura cuándo se genera una alerta temprana
 export default function UmbralesAdmin() {
@@ -13,6 +13,7 @@ export default function UmbralesAdmin() {
   const [dias, setDias] = useState('');
   const [mensaje, setMensaje] = useState<{ ok: boolean; texto: string } | null>(null);
   const [guardando, setGuardando] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     if (!data) return;
@@ -31,7 +32,8 @@ export default function UmbralesAdmin() {
         notas_minimas: Number(notas),
         dias_minimos: Number(dias),
       });
-      setMensaje({ ok: true, texto: 'Umbrales guardados. Las alertas se recalcularon.' });
+      setMensaje(null);
+      toast('Umbrales guardados. Las alertas se recalcularon.');
     } catch (e) {
       setMensaje({ ok: false, texto: messageOf(e) });
     } finally {
@@ -52,7 +54,6 @@ export default function UmbralesAdmin() {
           <Field label="Notas mínimas para evaluar el promedio" value={notas} onChangeText={setNotas} keyboardType="number-pad" />
           <Field label="Días registrados mínimos para evaluar la asistencia" value={dias} onChangeText={setDias} keyboardType="number-pad" />
           <Notice text={mensaje && !mensaje.ok ? mensaje.texto : null} />
-          <Notice tone="ok" text={mensaje?.ok ? mensaje.texto : null} />
           <Button label={guardando ? 'Guardando…' : 'Guardar umbrales'} onPress={() => void guardar()} disabled={guardando} />
         </Card>
       )}

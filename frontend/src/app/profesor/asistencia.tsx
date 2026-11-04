@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import {
   Button,
@@ -14,8 +14,10 @@ import {
   Notice,
   SelectorFecha,
   useAsync,
+  useToast,
 } from '@/components/ui';
 import { api, type EstadoAsistencia } from '@/lib/api';
+import { Text } from '@/components/texto';
 
 const ESTADOS: EstadoAsistencia[] = ['presente', 'ausente', 'atrasado', 'justificado'];
 const FECHA = /^\d{4}-\d{2}-\d{2}$/;
@@ -32,6 +34,7 @@ function Pasar({ cursoId }: { cursoId: number }) {
   const [estados, setEstados] = useState<Record<number, EstadoAsistencia>>({});
   const [mensaje, setMensaje] = useState<{ texto: string; ok: boolean } | null>(null);
   const [guardando, setGuardando] = useState(false);
+  const toast = useToast();
 
   // Alumnos sin registro quedan en "presente" por defecto
   useEffect(() => {
@@ -61,7 +64,7 @@ function Pasar({ cursoId }: { cursoId: number }) {
         fecha,
         Object.entries(estados).map(([id, estado]) => ({ alumno_id: Number(id), estado })),
       );
-      setMensaje({ texto: 'Asistencia guardada. Este es el resumen del día:', ok: true });
+      toast('Asistencia guardada');
       await reload();
     } catch (e) {
       setMensaje({ texto: messageOf(e), ok: false });
@@ -77,7 +80,6 @@ function Pasar({ cursoId }: { cursoId: number }) {
         {!fechaOk && <Notice text="Fecha inválida." />}
         {esFutura && <Notice text="No se puede registrar asistencia en una fecha futura." />}
       </Card>
-      <Notice tone="ok" text={mensaje?.ok ? mensaje.texto : null} />
       {fechaOk && !loading && data && !!data.length && (
         <Card>
           <Text style={styles.resumenTitulo}>{guardados.length ? 'Asistencia registrada' : 'Asistencia sin registrar'}</Text>

@@ -1,7 +1,8 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Card, colors, Empty, Loading, Notice, Screen, useAsync } from '@/components/ui';
 import { api } from '@/lib/api';
+import { Text } from '@/components/texto';
 
 const decimal = (n: number) => n.toLocaleString('es-CL', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 

@@ -1,7 +1,8 @@
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import { Card, colors, CourseScreen, Empty, formatFecha, Loading, Notice, useAsync } from '@/components/ui';
 import { api, type Alerta } from '@/lib/api';
+import { Text } from '@/components/texto';
 
 const decimal = (n: number) => n.toLocaleString('es-CL', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
@@ -18,7 +19,7 @@ function Alertas({ cursoId }: { cursoId: number }) {
   return (
     <>
       <Notice text={error} />
-      {data && !data.length && <Empty text="No hay alertas activas en este curso." />}
+      {data && !data.length && <Empty icono="logrado" text="No hay alertas activas en este curso. ¡Todos van bien!" />}
       {data?.map((a) => {
         const d = describir(a);
         return (
