@@ -3,6 +3,10 @@ const assert = require('node:assert/strict');
 const { app, pool, request } = require('./helpers');
 const { MAX_INTENTOS } = require('../middleware/limiteLogin');
 
+test('T6: el límite por defecto es de 5 intentos fallidos', () => {
+    assert.equal(MAX_INTENTOS, 5);
+});
+
 before(() => pool.ready);
 
 const login = (password, email = 'apoderado2@salaabierta.cl') => request(app).post('/api/auth/login').send({ email, password });

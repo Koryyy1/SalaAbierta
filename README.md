@@ -65,7 +65,7 @@ npm run web
 * **Épica 002 – Muro:** el profesor publica anuncios; el apoderado ve solo los datos de sus pupilos, lee el muro, confirma recepción y comenta; el profesor ve quiénes confirmaron cada anuncio y cuántos faltan.
 * **Épica 003 – HU009 Asistente IA:** el apoderado pregunta en lenguaje natural por notas, asistencia, anotaciones, anuncios o dudas de uso (RAG con Google Gemini; sin `GEMINI_API_KEY` responde en modo básico). El modelo nunca accede a la base de datos ni recibe nombres.
 * **Épica 003 – HU010 Alertas tempranas:** el profesor ve alertas cuando un alumno baja de promedio 4,0 o de 85 % de asistencia; el Administrador configura los umbrales.
-* **Calidad y seguridad:** cada cambio se guarda junto con su auditoría en una sola transacción; la auditoría no se puede modificar ni borrar; límite de intentos fallidos de inicio de sesión; CORS restringido; JWT_SECRET obligatorio en producción; textos de 14 a 16 pt, zonas táctiles de 48 dp y selector de fecha sin escribir.
+* **Calidad y seguridad:** cada cambio se guarda junto con su auditoría en una sola transacción; la auditoría no se puede modificar ni borrar; límite de 5 intentos fallidos de inicio de sesión cada 15 minutos; CORS restringido; JWT_SECRET obligatorio en producción; textos de 14 a 16 pt, zonas táctiles de 48 dp y selector de fecha sin escribir.
 * Pendiente: Docker y despliegue en AWS con HTTPS.
 * Fuera del alcance del PMV: agendamiento de reuniones, sistema de recompensas, horario y certificados.
 

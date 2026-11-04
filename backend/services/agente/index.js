@@ -145,7 +145,8 @@ Reglas:
 
 // Llamada a Google Gemini (API REST). La clave se lee de la variable de entorno GEMINI_API_KEY.
 async function consultarModelo(contexto, pregunta) {
-    const modelo = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+    // gemini-3.5-flash-lite: modelo estable, rápido y económico (los 2.5 ya no se habilitan para cuentas nuevas)
+    const modelo = process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
     const controlador = new AbortController();
     const temporizador = setTimeout(() => controlador.abort(), TIEMPO_MAXIMO_MS);
     try {

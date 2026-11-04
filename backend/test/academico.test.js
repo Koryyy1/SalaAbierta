@@ -91,3 +91,11 @@ test('rechaza notas en asignaturas mal escritas o que el profesor no imparte en 
     assert.equal((await api(profesor).post('/api/alumnos/3/calificaciones', { asignatura: 'Lenguaje', descripcion: 'Control', nota: 6 })).status, 400);
     assert.equal((await api(profesor).post('/api/alumnos/3/calificaciones', { asignatura: 'Ciencias', descripcion: 'Control', nota: 6 })).status, 201);
 });
+
+test('el profesor puede editar la descripción de una nota junto con su valor', async () => {
+    const creada = await api(profesor).post('/api/alumnos/1/calificaciones', { asignatura: 'Ciencias', descripcion: 'Contrl', nota: 5 });
+    const editada = await api(profesor).put(`/api/calificaciones/${creada.body.dato.id}`, { nota: 5.5, descripcion: 'Control 2' });
+    assert.equal(editada.status, 200);
+    assert.equal(editada.body.dato.descripcion, 'Control 2');
+    assert.equal(editada.body.dato.nota, 5.5);
+});

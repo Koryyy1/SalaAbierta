@@ -1,6 +1,6 @@
 // T6: limita los intentos fallidos de inicio de sesión para frenar ataques de fuerza bruta.
-// Por defecto, 10 intentos fallidos cada 15 minutos por combinación de IP y correo.
-const MAX_INTENTOS = Number(process.env.LOGIN_MAX_INTENTOS) || 10;
+// Por defecto, 5 intentos fallidos cada 15 minutos por combinación de IP y correo.
+const MAX_INTENTOS = Number(process.env.LOGIN_MAX_INTENTOS) || 5;
 const VENTANA_MS = (Number(process.env.LOGIN_VENTANA_MINUTOS) || 15) * 60 * 1000;
 
 const fallidos = new Map(); // clave -> { cantidad, desde }
