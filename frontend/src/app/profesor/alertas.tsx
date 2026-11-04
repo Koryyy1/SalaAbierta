@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { Card, colors, CourseScreen, Empty, formatFecha, Loading, Notice, useAsync } from '@/components/ui';
 import { api, type Alerta } from '@/lib/api';
@@ -20,15 +21,17 @@ function Alertas({ cursoId }: { cursoId: number }) {
     <>
       <Notice text={error} />
       {data && !data.length && <Empty icono="logrado" text="No hay alertas activas en este curso. ¡Todos van bien!" />}
-      {data?.map((a) => {
+      {data?.map((a, i) => {
         const d = describir(a);
         return (
-          <Card key={a.id}>
+          <Animated.View key={a.id} entering={FadeInDown.delay(i * 70).duration(300)}>
+          <Card>
             <Text style={[styles.titulo, { color: d.color }]}>{d.titulo}</Text>
             <Text style={styles.alumno}>{a.alumno}</Text>
             <Text style={styles.detalle}>{d.detalle}</Text>
             <Text style={styles.fecha}>Desde el {formatFecha(a.creada_en)}</Text>
           </Card>
+          </Animated.View>
         );
       })}
     </>
