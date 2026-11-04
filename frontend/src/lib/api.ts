@@ -39,6 +39,18 @@ export type RespuestaAgente = {
   seccion: string | null;
   aviso?: string | null;
 };
+export type Alerta = {
+  id: number;
+  alumno_id: number;
+  alumno: string;
+  curso_id: number;
+  curso: string;
+  tipo: 'promedio' | 'asistencia';
+  valor: number;
+  umbral: number;
+  creada_en: string;
+};
+export type Umbrales = { promedio_minimo: number; asistencia_minima: number; notas_minimas: number; dias_minimos: number };
 export type FiltrosAuditoria = { desde?: string; hasta?: string; usuario?: string; tabla?: string };
 export type Anuncio = {
   id: number;
@@ -145,6 +157,10 @@ export const api = {
 
   preguntarAgente: (pregunta: string, alumnoId: number) =>
     request<RespuestaAgente>('POST', '/agente/preguntar', { pregunta, alumnoId }),
+
+  alertasCurso: (cursoId: number) => request<Lista<Alerta>>('GET', `/cursos/${cursoId}/alertas`).then((r) => r.datos),
+  umbrales: () => request<{ dato: Umbrales }>('GET', '/umbrales').then((r) => r.dato),
+  guardarUmbrales: (data: Umbrales) => request<{ dato: Umbrales }>('PUT', '/umbrales', data).then((r) => r.dato),
 
   auditoria: (filtros: FiltrosAuditoria) => {
     const query = Object.entries(filtros)
