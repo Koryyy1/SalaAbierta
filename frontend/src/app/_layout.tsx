@@ -14,11 +14,13 @@ const privadas = [
   'profesor/asistencia',
   'profesor/notas',
   'profesor/anotaciones',
+  'profesor/alertas',
   'apoderado/asistencia',
   'apoderado/notas',
   'apoderado/anotaciones',
   'apoderado/asistente',
   'admin/auditoria',
+  'admin/umbrales',
 ] as const;
 
 function Routes() {

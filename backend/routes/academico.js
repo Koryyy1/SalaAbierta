@@ -2,6 +2,7 @@ const express = require('express');
 const pool = require('../config/db');
 const { autenticar, requiereRol, guardiaCurso, guardiaAlumno, puedeVerAlumno } = require('../middleware/auth');
 const { registrarAuditoria } = require('../services/audit');
+const { recalcularAlumno } = require('../services/alertas');
 
 const router = express.Router();
 router.use(autenticar);
@@ -107,6 +108,8 @@ router.put('/cursos/:cursoId/asistencia', requiereRol('Profesor'), guardiaCurso,
                 tx
             );
         }
+        // HU010: recalcula las alertas de asistencia de los alumnos afectados
+        for (const alumnoId of new Set(registros.map((r) => r.alumno_id))) await recalcularAlumno(alumnoId, tx);
     });
     res.json({ estado: 'Éxito', mensaje: 'Asistencia guardada.' });
 });
@@ -148,6 +151,7 @@ router.post('/alumnos/:alumnoId/calificaciones', requiereRol('Profesor'), guardi
         );
         const nueva = (await tx.query(`${SELECT_NOTA} WHERE id = $1`, [rows[0].id])).rows[0];
         await registrarAuditoria({ usuarioId: req.user.id, accion: 'INSERT', tabla: 'calificaciones', registroId: nueva.id, despues: nueva }, tx);
+        await recalcularAlumno(req.alumnoId, tx);
         return nueva;
     });
     res.status(201).json({ estado: 'Éxito', dato: creada });
@@ -169,6 +173,7 @@ router.put('/calificaciones/:id', requiereRol('Profesor'), async (req, res) => {
         await tx.query('UPDATE calificaciones SET asignatura = $1, descripcion = $2, nota = $3 WHERE id = $4', [asignatura, descripcion, nota, id]);
         const editada = (await tx.query(`${SELECT_NOTA} WHERE id = $1`, [id])).rows[0];
         await registrarAuditoria({ usuarioId: req.user.id, accion: 'UPDATE', tabla: 'calificaciones', registroId: id, antes: previa, despues: editada }, tx);
+        await recalcularAlumno(previa.alumno_id, tx);
         return editada;
     });
     res.json({ estado: 'Éxito', dato: actual });

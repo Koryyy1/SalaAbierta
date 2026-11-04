@@ -68,6 +68,8 @@ const ready = (async () => {
     impl = await connect();
     await impl.exec(fs.readFileSync(path.join(__dirname, '..', 'db', 'schema.sql'), 'utf8'));
     await require('../db/seed')({ query: impl.query });
+    // HU010: al iniciar, recalcula las alertas con los datos actuales
+    await require('../services/alertas').recalcularTodos({ query: impl.query });
 })();
 
 module.exports = {

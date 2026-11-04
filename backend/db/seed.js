@@ -61,21 +61,25 @@ module.exports = async function seed(db) {
         josefa,
     ]);
 
-    const estados = ['presente', 'presente', 'presente', 'atrasado', 'presente', 'ausente', 'presente', 'justificado'];
-    for (const [i, alumnoId] of [sofia, mateo, benjamin, antonia, josefa].entries()) {
-        for (let d = 1; d <= 8; d++) {
-            await db.query('INSERT INTO asistencia (alumno_id, fecha, estado) VALUES ($1, $2, $3)', [
-                alumnoId,
-                diasAtras(d),
-                estados[(d + i * 3) % estados.length],
-            ]);
+    // 12 días de asistencia; los días no listados son "presente". Benjamín queda bajo el 85% (alerta HU010).
+    const excepciones = new Map([
+        [sofia, { 4: 'atrasado' }],
+        [mateo, { 3: 'ausente', 7: 'atrasado' }],
+        [benjamin, { 2: 'ausente', 5: 'ausente', 6: 'ausente', 9: 'ausente', 10: 'justificado' }],
+        [antonia, { 8: 'justificado' }],
+        [josefa, { 1: 'atrasado', 11: 'ausente' }],
+    ]);
+    for (const [alumnoId, dias] of excepciones) {
+        for (let d = 1; d <= 12; d++) {
+            await db.query('INSERT INTO asistencia (alumno_id, fecha, estado) VALUES ($1, $2, $3)', [alumnoId, diasAtras(d), dias[d] ?? 'presente']);
         }
     }
 
     const notas = [
-        ['Matemática', 'Prueba 1: Fracciones', [6.5, 5.8, 4.9, 6.0, 5.2]],
-        ['Lenguaje', 'Control de lectura', [6.0, 6.8, 5.5, 4.5, 6.2]],
-        ['Ciencias', 'Informe experimento', [5.5, 6.1, 4.2, 5.9, 6.6]],
+        // Orden: Sofía, Mateo, Benjamín, Antonia, Josefa. Benjamín queda con promedio bajo 4,0 (alerta HU010).
+        ['Matemática', 'Prueba 1: Fracciones', [6.5, 5.8, 3.6, 6.0, 5.2]],
+        ['Lenguaje', 'Control de lectura', [6.0, 6.8, 4.3, 4.5, 6.2]],
+        ['Ciencias', 'Informe experimento', [5.5, 6.1, 3.8, 5.9, 6.6]],
     ];
     for (const [asignatura, descripcion, valores] of notas) {
         for (const [i, alumnoId] of [sofia, mateo, benjamin, antonia, josefa].entries()) {

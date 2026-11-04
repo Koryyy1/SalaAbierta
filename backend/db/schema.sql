@@ -95,3 +95,26 @@ CREATE TABLE IF NOT EXISTS auditoria (
     datos_despues JSONB,
     fecha TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+-- HU010: umbrales configurables por el Administrador (una sola fila, id = 1)
+CREATE TABLE IF NOT EXISTS umbrales_alerta (
+    id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+    promedio_minimo NUMERIC(2,1) NOT NULL DEFAULT 4.0 CHECK (promedio_minimo >= 1.0 AND promedio_minimo <= 7.0),
+    asistencia_minima INTEGER NOT NULL DEFAULT 85 CHECK (asistencia_minima BETWEEN 0 AND 100),
+    notas_minimas INTEGER NOT NULL DEFAULT 2 CHECK (notas_minimas >= 1),
+    dias_minimos INTEGER NOT NULL DEFAULT 10 CHECK (dias_minimos >= 1)
+);
+INSERT INTO umbrales_alerta (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+
+-- HU010: alertas tempranas de rendimiento. resuelta_en = NULL significa alerta activa.
+CREATE TABLE IF NOT EXISTS alertas (
+    id SERIAL PRIMARY KEY,
+    alumno_id INTEGER NOT NULL REFERENCES alumnos(id),
+    tipo VARCHAR(20) NOT NULL CHECK (tipo IN ('promedio', 'asistencia')),
+    valor NUMERIC(5,1) NOT NULL,
+    umbral NUMERIC(5,1) NOT NULL,
+    creada_en TIMESTAMP NOT NULL DEFAULT NOW(),
+    resuelta_en TIMESTAMP
+);
+-- Índice único parcial: a lo más una alerta activa por alumno y tipo (evita duplicados)
+CREATE UNIQUE INDEX IF NOT EXISTS alertas_activas_unicas ON alertas (alumno_id, tipo) WHERE resuelta_en IS NULL;

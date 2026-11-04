@@ -25,9 +25,13 @@ const menuProfesor: MenuItem[] = [
   { label: 'Registrar notas', initial: 'N', href: '/profesor/notas' },
   { label: 'Anotaciones', initial: 'A', href: '/profesor/anotaciones' },
   { label: 'Muro del curso', initial: 'M', href: '/muro' },
+  { label: 'Alertas tempranas', initial: '!', href: '/profesor/alertas' },
 ];
 
-const menuAdmin: MenuItem[] = [{ label: 'Auditoría', initial: 'A', href: '/admin/auditoria' }];
+const menuAdmin: MenuItem[] = [
+  { label: 'Auditoría', initial: 'A', href: '/admin/auditoria' },
+  { label: 'Umbrales de alerta', initial: 'U', href: '/admin/umbrales' },
+];
 
 export default function HomeScreen() {
   const router = useRouter();
