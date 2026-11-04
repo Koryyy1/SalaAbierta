@@ -58,7 +58,7 @@ npm run web
 | Profesor | profesor@salaabierta.cl | profesor123 |
 | Apoderado (1 pupilo) | apoderado@salaabierta.cl | apoderado123 |
 | Apoderado (2 pupilos) | apoderado2@salaabierta.cl | apoderado123 |
-| Administrador (auditoría y umbrales de alerta) | admin@salaabierta.cl | admin123 |
+| Dirección: Patricia Vidal (rol Administrador: resumen del colegio, auditoría y umbrales) | admin@salaabierta.cl | admin123 |
 
 ### Alcance implementado
 * **Épica 001 – Gestión académica:** el profesor pasa asistencia, registra y edita notas y anotaciones; todo cambio queda en la tabla `auditoria` (`GET /api/auditoria`, rol Administrador).

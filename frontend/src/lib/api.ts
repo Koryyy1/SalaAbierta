@@ -53,6 +53,28 @@ export type Alerta = {
   creada_en: string;
 };
 export type Umbrales = { promedio_minimo: number; asistencia_minima: number; notas_minimas: number; dias_minimos: number };
+export type ResumenPupilo = {
+  id: number;
+  nombre: string;
+  curso: string;
+  promedio: number | null;
+  asistencia: number | null;
+  ultimaAnotacion: { tipo: TipoAnotacion; descripcion: string; fecha: string } | null;
+};
+export type ResumenCurso = {
+  id: number;
+  nombre: string;
+  alumnos: number;
+  promedio: number | null;
+  asistencia: number | null;
+  alertasPromedio: number;
+  alertasAsistencia: number;
+  alumnosConAlerta: number;
+};
+export type ResumenDireccion = {
+  colegio: { cursos: number; alumnos: number; asistencia: number | null; alumnosConAlerta: number };
+  datos: ResumenCurso[];
+};
 export type FiltrosAuditoria = { desde?: string; hasta?: string; usuario?: string; tabla?: string };
 export type Anuncio = {
   id: number;
@@ -162,6 +184,9 @@ export const api = {
   preguntarAgente: (pregunta: string, alumnoId: number) =>
     request<RespuestaAgente>('POST', '/agente/preguntar', { pregunta, alumnoId }),
 
+  resumenApoderado: () => request<Lista<ResumenPupilo>>('GET', '/apoderado/resumen').then((r) => r.datos),
+  resumenDireccion: () => request<ResumenDireccion>('GET', '/direccion/resumen'),
+  alertasProfesor: () => request<Lista<Alerta>>('GET', '/alertas').then((r) => r.datos),
   alertasCurso: (cursoId: number) => request<Lista<Alerta>>('GET', `/cursos/${cursoId}/alertas`).then((r) => r.datos),
   umbrales: () => request<{ dato: Umbrales }>('GET', '/umbrales').then((r) => r.dato),
   guardarUmbrales: (data: Umbrales) => request<{ dato: Umbrales }>('PUT', '/umbrales', data).then((r) => r.dato),
