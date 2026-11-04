@@ -24,13 +24,22 @@ const notaOk = (n: number) => Number.isFinite(n) && n >= 1 && n <= 7 && Math.rou
 function FilaNota({ nota, onSaved }: { nota: Calificacion; onSaved: () => void }) {
   const [editando, setEditando] = useState(false);
   const [valor, setValor] = useState(nota.nota.toFixed(1));
+  const [descripcion, setDescripcion] = useState(nota.descripcion);
   const [error, setError] = useState<string | null>(null);
+
+  const cancelar = () => {
+    setValor(nota.nota.toFixed(1));
+    setDescripcion(nota.descripcion);
+    setError(null);
+    setEditando(false);
+  };
 
   const guardar = async () => {
     const n = parseNota(valor);
     if (!notaOk(n)) return setError('La nota debe estar entre 1.0 y 7.0 (un decimal).');
+    if (!descripcion.trim()) return setError('La descripción no puede quedar vacía.');
     try {
-      await api.editarCalificacion(nota.id, { nota: n });
+      await api.editarCalificacion(nota.id, { nota: n, descripcion: descripcion.trim() });
       setEditando(false);
       setError(null);
       onSaved();
@@ -49,15 +58,16 @@ function FilaNota({ nota, onSaved }: { nota: Calificacion; onSaved: () => void }
       </Text>
       {editando ? (
         <>
-          <Field label="Nueva nota" value={valor} onChangeText={setValor} keyboardType="decimal-pad" />
+          <Field label="Descripción" value={descripcion} onChangeText={setDescripcion} maxLength={200} />
+          <Field label="Nota" value={valor} onChangeText={setValor} keyboardType="decimal-pad" />
           <Notice text={error} />
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <Button label="Guardar" onPress={guardar} />
-            <Button label="Cancelar" tone="secondary" onPress={() => setEditando(false)} />
+            <Button label="Cancelar" tone="secondary" onPress={cancelar} />
           </View>
         </>
       ) : (
-        <Button label="Editar nota" tone="secondary" onPress={() => setEditando(true)} />
+        <Button label="Editar" tone="secondary" onPress={() => setEditando(true)} />
       )}
     </Card>
   );
@@ -113,7 +123,7 @@ function NotasAlumno({ alumnoId, cursoId }: { alumnoId: number; cursoId: number 
         <Text style={{ color: colors.sand, fontWeight: '800' }}>Promedio: {data.promedio?.toFixed(1) ?? '—'}</Text>
       )}
       {data && !data.datos.length && <Empty text="Aún no hay calificaciones." />}
-      {data?.datos.map((n) => <FilaNota key={`${n.id}-${n.nota}`} nota={n} onSaved={reload} />)}
+      {data?.datos.map((n) => <FilaNota key={`${n.id}-${n.nota}-${n.descripcion}`} nota={n} onSaved={reload} />)}
     </>
   );
 }

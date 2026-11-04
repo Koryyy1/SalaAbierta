@@ -146,7 +146,7 @@ export const api = {
     request<{ promedio: number | null } & Lista<Calificacion>>('GET', `/alumnos/${alumnoId}/calificaciones`),
   crearCalificacion: (alumnoId: number, data: { asignatura: string; descripcion: string; nota: number }) =>
     request<unknown>('POST', `/alumnos/${alumnoId}/calificaciones`, data),
-  editarCalificacion: (id: number, data: { nota: number }) => request<unknown>('PUT', `/calificaciones/${id}`, data),
+  editarCalificacion: (id: number, data: { nota: number; descripcion?: string }) => request<unknown>('PUT', `/calificaciones/${id}`, data),
 
   anotaciones: (alumnoId: number) => request<Lista<Anotacion>>('GET', `/alumnos/${alumnoId}/anotaciones`).then((r) => r.datos),
   crearAnotacion: (alumnoId: number, data: { tipo: TipoAnotacion; descripcion: string }) =>
