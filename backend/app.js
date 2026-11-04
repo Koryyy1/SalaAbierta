@@ -27,6 +27,7 @@ app.get('/api/roles', async (req, res) => {
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api', require('./routes/academico')); // Épica 001: gestión académica y evaluativa
 app.use('/api', require('./routes/muro')); // Épica 002: muro de comunicación
+app.use('/api/agente', require('./routes/agente')); // Épica 003: agente IA conversacional (HU009)
 
 app.use('/api', (req, res) => res.status(404).json({ estado: 'Error', mensaje: 'Ruta no encontrada.' }));
 

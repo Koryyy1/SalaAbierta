@@ -85,7 +85,9 @@ export default function HomeScreen() {
         </View>
 
         {!esProfesor && usuario?.rol === 'Apoderado' && (
-          <Pressable style={({ pressed }) => [styles.chatbotButton, pressed && styles.chatbotButtonPressed]}>
+          <Pressable
+            onPress={() => router.push('/apoderado/asistente')}
+            style={({ pressed }) => [styles.chatbotButton, pressed && styles.chatbotButtonPressed]}>
             <View>
               <Text style={styles.chatbotText}>¿Necesitas ayuda?</Text>
               <Text style={styles.chatbotTextBold}>Iniciar Chatbot</Text>

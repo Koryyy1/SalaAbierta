@@ -32,6 +32,13 @@ export type RegistroAuditoria = {
   datos_despues: Record<string, unknown> | null;
   fecha: string;
 };
+export type RespuestaAgente = {
+  respuesta: string;
+  tipo: 'notas' | 'asistencia' | 'anotaciones' | 'muro' | 'uso' | 'denegado' | 'sin_datos';
+  modo: 'ia' | 'basico';
+  seccion: string | null;
+  aviso?: string | null;
+};
 export type FiltrosAuditoria = { desde?: string; hasta?: string; usuario?: string; tabla?: string };
 export type Anuncio = {
   id: number;
@@ -135,6 +142,9 @@ export const api = {
   confirmacionesAnuncio: (id: number) => request<DetalleConfirmaciones>('GET', `/anuncios/${id}/confirmaciones`),
   confirmarAnuncio: (id: number) => request<unknown>('POST', `/anuncios/${id}/confirmar`),
   comentarAnuncio: (id: number, contenido: string) => request<unknown>('POST', `/anuncios/${id}/comentarios`, { contenido }),
+
+  preguntarAgente: (pregunta: string, alumnoId: number) =>
+    request<RespuestaAgente>('POST', '/agente/preguntar', { pregunta, alumnoId }),
 
   auditoria: (filtros: FiltrosAuditoria) => {
     const query = Object.entries(filtros)
