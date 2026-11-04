@@ -57,7 +57,7 @@ test('rechaza notas fuera de la escala 1,0 a 7,0', async () => {
 });
 
 test('registra y edita una nota, auditando el valor antes y después', async () => {
-    const creada = await api(profesor).post('/api/alumnos/1/calificaciones', { asignatura: 'Historia', descripcion: 'Control 1', nota: 5.5 });
+    const creada = await api(profesor).post('/api/alumnos/1/calificaciones', { asignatura: 'Matemática', descripcion: 'Control 1', nota: 5.5 });
     assert.equal(creada.status, 201);
     const id = creada.body.dato.id;
 
@@ -74,4 +74,20 @@ test('registra una anotación con su auditoría', async () => {
     const res = await api(profesor).post('/api/alumnos/1/anotaciones', { tipo: 'positiva', descripcion: 'Excelente trabajo en equipo.' });
     assert.equal(res.status, 201);
     assert.ok((await auditoriaDe('anotaciones')).some((a) => a.registro_id === res.body.dato.id));
+});
+
+test('el profesor solo ve las asignaturas que imparte en cada curso', async () => {
+    const curso1 = (await api(profesor).get('/api/cursos/1/asignaturas')).body.datos.map((a) => a.nombre);
+    const curso2 = (await api(profesor).get('/api/cursos/2/asignaturas')).body.datos.map((a) => a.nombre);
+    assert.deepEqual(curso1, ['Ciencias', 'Lenguaje', 'Matemática']);
+    assert.deepEqual(curso2, ['Ciencias', 'Matemática']);
+});
+
+test('rechaza notas en asignaturas mal escritas o que el profesor no imparte en el curso', async () => {
+    const malEscrita = await api(profesor).post('/api/alumnos/1/calificaciones', { asignatura: 'Cienciaasdawd', descripcion: 'Control', nota: 5.2 });
+    assert.equal(malEscrita.status, 400);
+    assert.match(malEscrita.body.mensaje, /asignaturas que usted imparte/);
+    // Josefa (alumno 3) está en 6° Básico B, donde la profesora no imparte Lenguaje
+    assert.equal((await api(profesor).post('/api/alumnos/3/calificaciones', { asignatura: 'Lenguaje', descripcion: 'Control', nota: 6 })).status, 400);
+    assert.equal((await api(profesor).post('/api/alumnos/3/calificaciones', { asignatura: 'Ciencias', descripcion: 'Control', nota: 6 })).status, 201);
 });

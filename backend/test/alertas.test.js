@@ -39,7 +39,7 @@ test('HU010: el profesor ve las alertas de promedio y asistencia de sus cursos',
 });
 
 test('HU010: no se duplican alertas para la misma condición', async () => {
-    await api(profesor).post(`/api/alumnos/${BENJAMIN}/calificaciones`, { asignatura: 'Historia', descripcion: 'Control', nota: 3.5 });
+    await api(profesor).post(`/api/alumnos/${BENJAMIN}/calificaciones`, { asignatura: 'Ciencias', descripcion: 'Control', nota: 3.5 });
     const promedio = (await alertasDe(BENJAMIN)).filter((a) => a.tipo === 'promedio');
     assert.equal(promedio.length, 1);
     assert.equal(promedio[0].valor, 3.8); // se actualiza el valor de la misma alerta

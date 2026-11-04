@@ -1,6 +1,31 @@
 const bcrypt = require('bcryptjs');
 
 const ROLES = ['Profesor', 'Apoderado', 'Administrador'];
+const ASIGNATURAS = ['Matemática', 'Lenguaje', 'Ciencias', 'Historia', 'Inglés', 'Artes Visuales', 'Educación Física'];
+
+// Asignaturas que imparte la profesora de demostración en cada curso.
+// También se aplica a bases ya creadas que aún no tienen asignaciones.
+const ASIGNACIONES_DEMO = {
+    '5° Básico A': ['Matemática', 'Lenguaje', 'Ciencias'],
+    '6° Básico B': ['Matemática', 'Ciencias'],
+};
+
+async function asignarAsignaturasDemo(db) {
+    const { rows: hay } = await db.query('SELECT 1 FROM profesor_asignaturas LIMIT 1');
+    if (hay.length) return;
+    const { rows: prof } = await db.query("SELECT id FROM usuarios WHERE email = 'profesor@salaabierta.cl'");
+    if (!prof.length) return;
+    for (const [curso, asignaturas] of Object.entries(ASIGNACIONES_DEMO)) {
+        for (const asignatura of asignaturas) {
+            await db.query(
+                `INSERT INTO profesor_asignaturas (usuario_id, curso_id, asignatura_id)
+                 SELECT $1, c.id, a.id FROM cursos c, asignaturas a WHERE c.nombre = $2 AND a.nombre = $3
+                 ON CONFLICT DO NOTHING`,
+                [prof[0].id, curso, asignatura]
+            );
+        }
+    }
+}
 
 // Fecha AAAA-MM-DD de hace n días, en la zona horaria del colegio (la misma que usa la API para "hoy")
 function diasAtras(n) {
@@ -19,8 +44,12 @@ module.exports = async function seed(db) {
         );
     }
 
+    for (const nombre of ASIGNATURAS) {
+        await db.query('INSERT INTO asignaturas (nombre) VALUES ($1) ON CONFLICT (nombre) DO NOTHING', [nombre]);
+    }
+
     const { rows: existentes } = await db.query('SELECT 1 FROM usuarios LIMIT 1');
-    if (existentes.length) return;
+    if (existentes.length) return asignarAsignaturasDemo(db);
 
     const rolId = async (nombre) => (await db.query('SELECT id FROM roles WHERE nombre = $1', [nombre])).rows[0].id;
     const insertar = async (sql, params) => (await db.query(sql + ' RETURNING id', params)).rows[0].id;
@@ -83,6 +112,7 @@ module.exports = async function seed(db) {
     ];
     for (const [asignatura, descripcion, valores] of notas) {
         for (const [i, alumnoId] of [sofia, mateo, benjamin, antonia, josefa].entries()) {
+            if (alumnoId === josefa && !ASIGNACIONES_DEMO['6° Básico B'].includes(asignatura)) continue;
             await db.query(
                 'INSERT INTO calificaciones (alumno_id, asignatura, descripcion, nota, fecha, profesor_id) VALUES ($1, $2, $3, $4, $5, $6)',
                 [alumnoId, asignatura, descripcion, valores[i], diasAtras(10 + i), profesor]
@@ -103,4 +133,6 @@ module.exports = async function seed(db) {
         'Materiales para Artes Visuales',
         'Se solicita traer para el jueves: cartulina de colores, tijeras y pegamento en barra. ¡Gracias por su colaboración!',
     ]);
+
+    await asignarAsignaturasDemo(db);
 };

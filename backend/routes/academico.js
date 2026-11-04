@@ -38,6 +38,29 @@ router.get('/cursos', requiereRol('Profesor'), async (req, res) => {
     res.json({ estado: 'Éxito', datos: rows });
 });
 
+// Asignaturas que el profesor imparte en el curso (opciones al registrar una nota)
+router.get('/cursos/:cursoId/asignaturas', requiereRol('Profesor'), guardiaCurso, async (req, res) => {
+    const { rows } = await pool.query(
+        `SELECT a.id, a.nombre FROM profesor_asignaturas pa JOIN asignaturas a ON a.id = pa.asignatura_id
+         WHERE pa.usuario_id = $1 AND pa.curso_id = $2 ORDER BY a.nombre`,
+        [req.user.id, req.cursoId]
+    );
+    res.json({ estado: 'Éxito', datos: rows });
+});
+
+// ¿El profesor imparte esta asignatura en el curso del alumno?
+async function imparteAsignatura(profesorId, alumnoId, asignatura) {
+    const { rows } = await pool.query(
+        `SELECT 1 FROM profesor_asignaturas pa
+         JOIN asignaturas a ON a.id = pa.asignatura_id
+         JOIN alumnos al ON al.curso_id = pa.curso_id
+         WHERE pa.usuario_id = $1 AND al.id = $2 AND a.nombre = $3`,
+        [profesorId, alumnoId, asignatura]
+    );
+    return rows.length > 0;
+}
+const ASIGNATURA_NO_IMPARTIDA = 'Seleccione una de las asignaturas que usted imparte en este curso.';
+
 router.get('/cursos/:cursoId/alumnos', requiereRol('Profesor'), guardiaCurso, async (req, res) => {
     const { rows } = await pool.query('SELECT id, nombre FROM alumnos WHERE curso_id = $1 ORDER BY nombre', [req.cursoId]);
     res.json({ estado: 'Éxito', datos: rows });
@@ -142,6 +165,7 @@ router.post('/alumnos/:alumnoId/calificaciones', requiereRol('Profesor'), guardi
     if (!asignatura || !descripcion || !notaValida(nota)) {
         return error(res, 400, 'Asignatura, descripción y nota (1.0 a 7.0) son obligatorias.');
     }
+    if (!(await imparteAsignatura(req.user.id, req.alumnoId, asignatura))) return error(res, 400, ASIGNATURA_NO_IMPARTIDA);
 
     const creada = await pool.transaction(async (tx) => {
         const { rows } = await tx.query(
@@ -168,6 +192,9 @@ router.put('/calificaciones/:id', requiereRol('Profesor'), async (req, res) => {
     const descripcion = texto(req.body?.descripcion ?? previa.descripcion, 200);
     const nota = req.body?.nota ?? previa.nota;
     if (!asignatura || !descripcion || !notaValida(nota)) return error(res, 400, 'Datos de calificación inválidos.');
+    if (asignatura !== previa.asignatura && !(await imparteAsignatura(req.user.id, previa.alumno_id, asignatura))) {
+        return error(res, 400, ASIGNATURA_NO_IMPARTIDA);
+    }
 
     const actual = await pool.transaction(async (tx) => {
         await tx.query('UPDATE calificaciones SET asignatura = $1, descripcion = $2, nota = $3 WHERE id = $4', [asignatura, descripcion, nota, id]);
