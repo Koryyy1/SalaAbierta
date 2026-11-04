@@ -23,8 +23,10 @@ test('T6: un inicio de sesión correcto reinicia el contador', async () => {
     assert.equal((await login('apoderado123', 'apoderado@salaabierta.cl')).status, 200);
 });
 
-test('T7: la ruta pública /api/roles ya no existe', async () => {
-    assert.equal((await request(app).get('/api/roles')).status, 404);
+test('T7: /api/roles ya no responde sin token y no existe para usuarios autenticados', async () => {
+    assert.equal((await request(app).get('/api/roles')).status, 401);
+    const tk = (await login('profesor123', 'profesor@salaabierta.cl')).body.token;
+    assert.equal((await request(app).get('/api/roles').set('Authorization', `Bearer ${tk}`)).status, 404);
 });
 
 test('T7: CORS acepta la app en la red local y rechaza otros sitios', async () => {
