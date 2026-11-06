@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "sala-abierta",
+    "name": "SalaAbierta",
     "slug": "sala-abierta",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,6 +11,8 @@
       "icon": "./assets/expo.icon"
     },
     "android": {
+      "package": "cl.salaabierta.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

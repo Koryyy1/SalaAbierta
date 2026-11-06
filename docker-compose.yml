@@ -1,0 +1,62 @@
+# T11: despliegue de SalaAbierta con Docker (PostgreSQL + API + web con HTTPS)
+# Uso: copiar .env.produccion.example a .env, completarlo y ejecutar  docker compose up -d --build
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-sala_abierta_db}
+      POSTGRES_USER: ${DB_USER:-salaabierta}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Falta DB_PASSWORD en .env}
+    volumes:
+      - datos_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Sin puertos publicados: la base solo es accesible desde la red interna de Docker
+
+  api:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      TRUST_PROXY: 1
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-sala_abierta_db}
+      DB_USER: ${DB_USER:-salaabierta}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?Falta JWT_SECRET en .env}
+      CORS_ORIGINS: https://${DOMINIO:?Falta DOMINIO en .env}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash-lite}
+
+  web:
+    build:
+      context: .
+      dockerfile: despliegue/web.Dockerfile
+      args:
+        EXPO_PUBLIC_API_URL: https://${DOMINIO}
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      DOMINIO: ${DOMINIO}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - datos_caddy:/data
+      - config_caddy:/config
+
+volumes:
+  datos_postgres:
+  datos_caddy:
+  config_caddy:

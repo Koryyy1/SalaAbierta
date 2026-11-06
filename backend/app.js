@@ -4,6 +4,10 @@ const cors = require('cors');
 
 const app = express();
 
+// T11: detrás de Caddy (proxy inverso) se confía en el primer proxy para conocer la IP real del cliente
+// (la usa el límite de intentos de inicio de sesión). Se activa con TRUST_PROXY=1.
+if (process.env.TRUST_PROXY) app.set('trust proxy', Number(process.env.TRUST_PROXY) || process.env.TRUST_PROXY);
+
 // T7: CORS restringido. En producción solo se aceptan los orígenes de CORS_ORIGINS (separados por coma).
 // En desarrollo se aceptan localhost y la red local (192.168.x.x, 10.x.x.x, 172.16-31.x.x).
 // Las apps nativas (Expo Go, APK) no envían Origin y no se ven afectadas.

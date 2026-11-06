@@ -1,0 +1,23 @@
+# T11: HTTPS automático (Let's Encrypt) para el dominio indicado en DOMINIO
+{$DOMINIO} {
+	encode zstd gzip
+
+	# La API REST se atiende en el contenedor del backend
+	handle /api/* {
+		reverse_proxy api:3000
+	}
+
+	# Todo lo demás es la versión web de la app (exportación estática de Expo Router)
+	handle {
+		root * /srv
+		try_files {path} {path}.html /index.html
+		file_server
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}
