@@ -1,9 +1,10 @@
 import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Button, Card, Chip, colors, Field, Loading, messageOf, Notice, PupilScreen } from '@/components/ui';
 import { api, type Alumno, type RespuestaAgente } from '@/lib/api';
+import { Text } from '@/components/texto';
 
 type Mensaje = { id: number; de: 'apoderado' | 'asistente'; texto: string; respuesta?: RespuestaAgente };
 

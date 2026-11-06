@@ -1,19 +1,74 @@
+import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-  type TextInputProps,
-} from 'react-native';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { Platform, Pressable, ScrollView, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
+import Animated, {
+  FadeInDown,
+  FadeOutDown,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Icono, type NombreIcono } from '@/components/icono';
+import { FUENTE, Text } from '@/components/texto';
 import { api, type Alumno, type Curso, type EstadoAsistencia } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+
+// Vibración corta al tocar (solo en el teléfono; en web no aporta)
+export const vibrar = {
+  toque: () => {
+    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+  },
+  exito: () => {
+    if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+  },
+  error: () => {
+    if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
+  },
+};
+
+// --- Mensajes flotantes ("toast"): confirman una acción y desaparecen solos ---
+type Toast = { id: number; texto: string; tono: 'ok' | 'error' };
+const ToastContext = createContext<(texto: string, tono?: Toast['tono']) => void>(() => {});
+export const useToast = () => useContext(ToastContext);
+
+export function ToastProvider({ children }: { children: ReactNode }) {
+  const [toast, setToast] = useState<Toast | null>(null);
+  const temporizador = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const mostrar = useCallback((texto: string, tono: Toast['tono'] = 'ok') => {
+    if (temporizador.current) clearTimeout(temporizador.current);
+    setToast({ id: Date.now(), texto, tono });
+    if (tono === 'ok') vibrar.exito();
+    else vibrar.error();
+    temporizador.current = setTimeout(() => setToast(null), 2800);
+  }, []);
+
+  return (
+    <ToastContext.Provider value={mostrar}>
+      {children}
+      {toast && (
+        <View pointerEvents="none" style={styles.toastZona}>
+          <Animated.View
+            key={toast.id}
+            entering={FadeInDown.duration(220)}
+            exiting={FadeOutDown.duration(200)}
+            accessibilityLiveRegion="polite"
+            accessibilityRole="alert"
+            style={[styles.toast, toast.tono === 'error' && { backgroundColor: colors.danger }]}>
+            <Icono nombre={toast.tono === 'ok' ? 'ok' : 'error'} size={22} color={colors.white} />
+            <Text style={styles.toastTexto}>{toast.texto}</Text>
+          </Animated.View>
+        </View>
+      )}
+    </ToastContext.Provider>
+  );
+}
 
 export const colors = {
   brown: '#5d3b2b',
@@ -66,8 +121,14 @@ export function Screen({ title, children }: { title: string; children: ReactNode
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.topBar}>
-        <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} hitSlop={12}>
-          <Text style={styles.back}>‹ Volver</Text>
+        <Pressable
+          onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel="Volver"
+          style={styles.backZona}>
+          <Icono nombre="volver" size={18} color={colors.muted} />
+          <Text style={styles.back}>Volver</Text>
         </Pressable>
         <Text style={styles.title}>{title}</Text>
       </View>
@@ -87,22 +148,33 @@ export function Button({
   onPress,
   disabled,
   tone = 'primary',
+  icono,
 }: {
   label: string;
   onPress: () => void;
   disabled?: boolean;
   tone?: 'primary' | 'secondary';
+  icono?: NombreIcono;
 }) {
+  const colorTexto = tone === 'secondary' ? colors.brown : '#1a1006';
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => {
+        vibrar.toque();
+        onPress();
+      }}
       disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: !!disabled }}
       style={({ pressed }) => [
         styles.button,
         tone === 'secondary' && styles.buttonSecondary,
-        (pressed || disabled) && { opacity: 0.7 },
+        disabled && { opacity: 0.55 },
+        pressed && { opacity: 0.85, transform: [{ scale: 0.97 }] },
       ]}>
-      <Text style={[styles.buttonText, tone === 'secondary' && { color: colors.brown }]}>{label}</Text>
+      {icono && <Icono nombre={icono} size={20} color={colorTexto} />}
+      <Text style={[styles.buttonText, { color: colorTexto }]}>{label}</Text>
     </Pressable>
   );
 }
@@ -113,7 +185,8 @@ export function Field(props: TextInputProps & { label: string }) {
     <View style={{ gap: 4 }}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
-        placeholderTextColor="#b9a08e"
+        placeholderTextColor="#8f7564"
+        accessibilityLabel={label}
         {...rest}
         style={[styles.input, rest.multiline && { minHeight: 80, textAlignVertical: 'top' }, style]}
       />
@@ -124,8 +197,18 @@ export function Field(props: TextInputProps & { label: string }) {
 export function Chip({ label, selected, onPress, color }: { label: string; selected: boolean; onPress: () => void; color?: string }) {
   return (
     <Pressable
-      onPress={onPress}
-      style={[styles.chip, selected && { backgroundColor: color ?? colors.brown, borderColor: color ?? colors.brown }]}>
+      onPress={() => {
+        vibrar.toque();
+        onPress();
+      }}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ selected }}
+      style={({ pressed }) => [
+        styles.chip,
+        selected && { backgroundColor: color ?? colors.brown, borderColor: color ?? colors.brown },
+        pressed && { transform: [{ scale: 0.96 }] },
+      ]}>
       <Text style={[styles.chipText, selected && { color: colors.white }]}>{label}</Text>
     </Pressable>
   );
@@ -135,18 +218,46 @@ export function Notice({ text, tone = 'danger' }: { text: string | null; tone?: 
   if (!text) return null;
   // Fondo sand en tarjetas; en el fondo marrón se usa un tono claro para mantener contraste
   return (
-    <View style={{ backgroundColor: colors.sand, borderRadius: 10, padding: 10 }}>
-      <Text style={{ color: tone === 'ok' ? colors.ok : colors.danger, fontWeight: '700' }}>{text}</Text>
+    <View
+      accessibilityRole="alert"
+      style={{ alignItems: 'center', backgroundColor: colors.sand, borderRadius: 12, flexDirection: 'row', gap: 8, padding: 12 }}>
+      <Icono nombre={tone === 'ok' ? 'ok' : 'error'} size={20} color={tone === 'ok' ? colors.ok : colors.danger} />
+      <Text style={{ color: tone === 'ok' ? colors.ok : colors.danger, flexShrink: 1, fontSize: 15, fontWeight: '700' }}>{text}</Text>
     </View>
   );
 }
 
-export function Loading() {
-  return <ActivityIndicator color={colors.brown} style={{ marginVertical: 24 }} />;
+// Carga con siluetas: tarjetas que "respiran" mientras llegan los datos (estáticas si se reduce el movimiento)
+export function Loading({ filas = 2 }: { filas?: number }) {
+  const reducir = useReducedMotion();
+  const opacidad = useSharedValue(0.55);
+  useEffect(() => {
+    if (!reducir) opacidad.value = withRepeat(withSequence(withTiming(1, { duration: 650 }), withTiming(0.55, { duration: 650 })), -1);
+  }, [reducir, opacidad]);
+  const animado = useAnimatedStyle(() => ({ opacity: opacidad.value }));
+  return (
+    <View accessibilityLabel="Cargando" accessibilityRole="progressbar" style={{ gap: 14 }}>
+      {Array.from({ length: filas }, (_, i) => (
+        <Animated.View key={i} style={[styles.silueta, animado]}>
+          <View style={[styles.siluetaLinea, { width: '45%', height: 16 }]} />
+          <View style={[styles.siluetaLinea, { width: '85%' }]} />
+          <View style={[styles.siluetaLinea, { width: '65%' }]} />
+        </Animated.View>
+      ))}
+    </View>
+  );
 }
 
-export function Empty({ text }: { text: string }) {
-  return <Text style={styles.empty}>{text}</Text>;
+// Estado vacío con ícono; "logrado" para buenas noticias (por ejemplo, sin alertas)
+export function Empty({ text, icono = 'vacio' }: { text: string; icono?: NombreIcono }) {
+  return (
+    <View style={styles.vacio}>
+      <View style={styles.vacioIcono}>
+        <Icono nombre={icono} size={34} color={colors.sand} />
+      </View>
+      <Text style={styles.empty}>{text}</Text>
+    </View>
+  );
 }
 
 // Pantalla de apoderado: elige pupilo (solo los suyos) y entrega el seleccionado
@@ -230,7 +341,7 @@ export function StudentPicker({ cursoId, children }: { cursoId: number; children
 export function LogoutLink() {
   const { cerrarSesion } = useAuth();
   return (
-    <Pressable onPress={() => void cerrarSesion()} hitSlop={8}>
+    <Pressable onPress={() => void cerrarSesion()} hitSlop={8} accessibilityRole="button" accessibilityLabel="Cerrar sesión">
       <Text style={styles.logout}>Cerrar sesión</Text>
     </Pressable>
   );
@@ -292,6 +403,7 @@ export function SelectorFecha({ value, onChange, max }: { value: string; onChang
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.white },
   topBar: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12, gap: 6 },
+  backZona: { alignItems: 'center', alignSelf: 'flex-start', flexDirection: 'row', gap: 2, minHeight: 32 },
   back: { color: colors.muted, fontSize: 15, fontWeight: '700' },
   title: { color: colors.ink, fontSize: 24, fontWeight: '800' },
   subtitle: { color: colors.sand, fontSize: 14, fontWeight: '700' },
@@ -310,6 +422,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.orange,
     borderRadius: 14,
+    flexDirection: 'row',
+    gap: 8,
     justifyContent: 'center',
     minHeight: 48,
     paddingVertical: 13,
@@ -322,6 +436,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: 12,
     color: colors.ink,
+    fontFamily: FUENTE.normal,
     fontSize: 16,
     paddingHorizontal: 14,
     paddingVertical: 11,
@@ -338,7 +453,35 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   chipText: { color: colors.brown, fontSize: 15, fontWeight: '700' },
-  empty: { color: colors.sand, fontSize: 16, textAlign: 'center', marginVertical: 12 },
+  empty: { color: colors.sand, fontSize: 16, textAlign: 'center' },
+  vacio: { alignItems: 'center', gap: 10, marginVertical: 18 },
+  vacioIcono: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(230, 199, 168, 0.14)',
+    borderRadius: 999,
+    height: 72,
+    justifyContent: 'center',
+    width: 72,
+  },
+  silueta: { backgroundColor: colors.sand, borderRadius: 18, gap: 10, padding: 16 },
+  siluetaLinea: { backgroundColor: colors.sandDark, borderRadius: 8, height: 12 },
+  toastZona: { alignItems: 'center', bottom: 28, left: 16, position: 'absolute', right: 16 },
+  toast: {
+    alignItems: 'center',
+    backgroundColor: colors.ok,
+    borderRadius: 16,
+    elevation: 6,
+    flexDirection: 'row',
+    gap: 10,
+    maxWidth: 480,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+  },
+  toastTexto: { color: colors.white, flexShrink: 1, fontSize: 16, fontWeight: '700' },
   logout: { color: colors.brown, fontSize: 14, fontWeight: '800', textDecorationLine: 'underline' },
   selector: { alignItems: 'center', backgroundColor: colors.white, borderRadius: 14, flexDirection: 'row', gap: 8, padding: 6 },
   flecha: { alignItems: 'center', backgroundColor: colors.sand, borderRadius: 12, height: 48, justifyContent: 'center', width: 56 },

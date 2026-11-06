@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Text } from 'react-native';
 import { View } from 'react-native';
 
 import {
@@ -16,8 +15,10 @@ import {
   Notice,
   StudentPicker,
   useAsync,
+  useToast,
 } from '@/components/ui';
 import { api, type TipoAnotacion } from '@/lib/api';
+import { Text } from '@/components/texto';
 
 const TIPOS: { tipo: TipoAnotacion; texto: string; color: string }[] = [
   { tipo: 'positiva', texto: 'Positiva', color: colors.ok },
@@ -30,11 +31,13 @@ function AnotacionesAlumno({ alumnoId }: { alumnoId: number }) {
   const [tipo, setTipo] = useState<TipoAnotacion>('observacion');
   const [descripcion, setDescripcion] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
+  const toast = useToast();
 
   const crear = async () => {
     if (!descripcion.trim()) return setFormError('Escribe la descripción de la anotación.');
     try {
       await api.crearAnotacion(alumnoId, { tipo, descripcion: descripcion.trim() });
+      toast('Anotación registrada');
       setDescripcion('');
       setFormError(null);
       await reload();

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 
 import {
   Button,
@@ -17,6 +17,7 @@ import {
   useAsync,
 } from '@/components/ui';
 import { api, type FiltrosAuditoria, type RegistroAuditoria } from '@/lib/api';
+import { Text } from '@/components/texto';
 
 const TABLAS = ['todas', 'asistencia', 'calificaciones', 'anotaciones', 'anuncios', 'umbrales_alerta'] as const;
 const NOMBRE_TABLA: Record<(typeof TABLAS)[number], string> = {

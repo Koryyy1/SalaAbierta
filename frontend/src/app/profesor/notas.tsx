@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 
 import {
   Button,
@@ -15,8 +15,10 @@ import {
   Notice,
   StudentPicker,
   useAsync,
+  useToast,
 } from '@/components/ui';
 import { api, type Calificacion } from '@/lib/api';
+import { Text } from '@/components/texto';
 
 const parseNota = (valor: string) => Number(valor.replace(',', '.'));
 const notaOk = (n: number) => Number.isFinite(n) && n >= 1 && n <= 7 && Math.round(n * 10) === n * 10;
@@ -26,6 +28,7 @@ function FilaNota({ nota, onSaved }: { nota: Calificacion; onSaved: () => void }
   const [valor, setValor] = useState(nota.nota.toFixed(1));
   const [descripcion, setDescripcion] = useState(nota.descripcion);
   const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
 
   const cancelar = () => {
     setValor(nota.nota.toFixed(1));
@@ -40,6 +43,7 @@ function FilaNota({ nota, onSaved }: { nota: Calificacion; onSaved: () => void }
     if (!descripcion.trim()) return setError('La descripción no puede quedar vacía.');
     try {
       await api.editarCalificacion(nota.id, { nota: n, descripcion: descripcion.trim() });
+      toast('Nota actualizada');
       setEditando(false);
       setError(null);
       onSaved();
@@ -81,6 +85,7 @@ function NotasAlumno({ alumnoId, cursoId }: { alumnoId: number; cursoId: number 
   const [descripcion, setDescripcion] = useState('');
   const [nota, setNota] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
+  const toast = useToast();
 
   const crear = async () => {
     const n = parseNota(nota);
@@ -90,6 +95,7 @@ function NotasAlumno({ alumnoId, cursoId }: { alumnoId: number; cursoId: number 
     }
     try {
       await api.crearCalificacion(alumnoId, { asignatura, descripcion: descripcion.trim(), nota: n });
+      toast('Nota registrada');
       setDescripcion('');
       setNota('');
       setFormError(null);

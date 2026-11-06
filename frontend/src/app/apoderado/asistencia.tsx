@@ -1,7 +1,8 @@
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 
 import { Card, colorEstado, colors, Empty, formatFecha, Loading, Notice, PupilScreen, useAsync } from '@/components/ui';
 import { api } from '@/lib/api';
+import { Text } from '@/components/texto';
 
 function Asistencia({ alumnoId }: { alumnoId: number }) {
   const { data, error, loading } = useAsync(() => api.asistenciaAlumno(alumnoId), [alumnoId]);

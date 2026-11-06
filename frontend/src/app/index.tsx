@@ -1,15 +1,17 @@
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Icono, type NombreIcono } from '@/components/icono';
 import { formatFecha, LogoutLink } from '@/components/ui';
 import { api, type ResumenPupilo } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { Text } from '@/components/texto';
 
 type MenuItem = {
   label: string;
-  initial: string;
+  icono: NombreIcono;
   href?: Href;
   aviso?: string | null;
 };
@@ -30,13 +32,21 @@ function ResumenPupilos({ datos, onIr }: { datos: ResumenPupilo[]; onIr: (href: 
               {p.nombre} · {p.curso}
             </Text>
             <View style={styles.indicadores}>
-              <Pressable style={styles.indicador} onPress={() => onIr('/apoderado/notas')} accessibilityRole="button">
+              <Pressable
+                style={styles.indicador}
+                onPress={() => onIr('/apoderado/notas')}
+                accessibilityRole="button"
+                accessibilityLabel={`Promedio ${p.promedio === null ? 'sin notas' : decimal(p.promedio)}. Ver notas`}>
                 <Text style={styles.indicadorEtiqueta}>Promedio</Text>
                 <Text style={[styles.indicadorValor, promedioBajo && { color: '#b3261e' }]}>
                   {p.promedio === null ? '—' : decimal(p.promedio)}
                 </Text>
               </Pressable>
-              <Pressable style={styles.indicador} onPress={() => onIr('/apoderado/asistencia')} accessibilityRole="button">
+              <Pressable
+                style={styles.indicador}
+                onPress={() => onIr('/apoderado/asistencia')}
+                accessibilityRole="button"
+                accessibilityLabel={`Asistencia ${p.asistencia === null ? 'sin registros' : `${p.asistencia} por ciento`}. Ver asistencia`}>
                 <Text style={styles.indicadorEtiqueta}>Asistencia</Text>
                 <Text style={[styles.indicadorValor, asistenciaBaja && { color: '#8a5200' }]}>
                   {p.asistencia === null ? '—' : `${p.asistencia}%`}
@@ -58,24 +68,24 @@ function ResumenPupilos({ datos, onIr }: { datos: ResumenPupilo[]; onIr: (href: 
 }
 
 const menuApoderado: MenuItem[] = [
-  { label: 'Notas', initial: 'N', href: '/apoderado/notas' },
-  { label: 'Anotaciones', initial: 'A', href: '/apoderado/anotaciones' },
-  { label: 'Muro del curso', initial: 'M', href: '/muro' },
-  { label: 'Asistencia', initial: 'A', href: '/apoderado/asistencia' },
+  { label: 'Notas', icono: 'libro', href: '/apoderado/notas' },
+  { label: 'Anotaciones', icono: 'anotaciones', href: '/apoderado/anotaciones' },
+  { label: 'Muro del curso', icono: 'muro', href: '/muro' },
+  { label: 'Asistencia', icono: 'calendario', href: '/apoderado/asistencia' },
 ];
 
 const menuProfesor: MenuItem[] = [
-  { label: 'Pasar asistencia', initial: 'A', href: '/profesor/asistencia' },
-  { label: 'Registrar notas', initial: 'N', href: '/profesor/notas' },
-  { label: 'Anotaciones', initial: 'A', href: '/profesor/anotaciones' },
-  { label: 'Muro del curso', initial: 'M', href: '/muro' },
-  { label: 'Alertas tempranas', initial: '!', href: '/profesor/alertas' },
+  { label: 'Pasar asistencia', icono: 'asistencia', href: '/profesor/asistencia' },
+  { label: 'Registrar notas', icono: 'notas', href: '/profesor/notas' },
+  { label: 'Anotaciones', icono: 'anotaciones', href: '/profesor/anotaciones' },
+  { label: 'Muro del curso', icono: 'muro', href: '/muro' },
+  { label: 'Alertas tempranas', icono: 'alertas', href: '/profesor/alertas' },
 ];
 
 const menuAdmin: MenuItem[] = [
-  { label: 'Resumen del colegio', initial: 'R', href: '/admin/resumen' },
-  { label: 'Auditoría', initial: 'A', href: '/admin/auditoria' },
-  { label: 'Umbrales de alerta', initial: 'U', href: '/admin/umbrales' },
+  { label: 'Resumen del colegio', icono: 'resumen', href: '/admin/resumen' },
+  { label: 'Auditoría', icono: 'auditoria', href: '/admin/auditoria' },
+  { label: 'Umbrales de alerta', icono: 'umbrales', href: '/admin/umbrales' },
 ];
 
 export default function HomeScreen() {
@@ -139,11 +149,13 @@ export default function HomeScreen() {
               key={item.label}
               disabled={!item.href}
               onPress={() => item.href && router.push(item.href)}
+              accessibilityRole="button"
+              accessibilityLabel={item.aviso ? `${item.label}, ${item.aviso}` : item.label}
               style={({ pressed }) => [styles.card, pressed && styles.cardPressed, !item.href && styles.cardDisabled]}
             >
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <View style={styles.cardBadge}>
-                  <Text style={styles.cardBadgeText}>{item.initial}</Text>
+                  <Icono nombre={item.icono} size={22} color="#5d3b2b" />
                 </View>
                 {item.aviso && (
                   <View style={styles.aviso} accessibilityLabel={item.aviso}>
@@ -156,7 +168,7 @@ export default function HomeScreen() {
                   <Text style={styles.cardLabel}>{item.label}</Text>
                   {!item.href && <Text style={styles.soon}>Próximamente</Text>}
                 </View>
-                {item.href && <Text style={styles.cardChevron}>›</Text>}
+                {item.href && <Icono nombre="siguiente" size={18} color="#5d3b2b" />}
               </View>
             </Pressable>
           ))}
@@ -165,12 +177,17 @@ export default function HomeScreen() {
         {!esProfesor && usuario?.rol === 'Apoderado' && (
           <Pressable
             onPress={() => router.push('/apoderado/asistente')}
+            accessibilityRole="button"
+            accessibilityLabel="Hablar con Sali, la asistente de SalaAbierta"
             style={({ pressed }) => [styles.chatbotButton, pressed && styles.chatbotButtonPressed]}>
-            <View>
-              <Text style={styles.chatbotText}>¿Necesitas ayuda?</Text>
-              <Text style={styles.chatbotTextBold}>Iniciar Chatbot</Text>
+            <View style={{ alignItems: 'center', flexDirection: 'row', gap: 14 }}>
+              <Icono nombre="chat" size={28} color="#1a1006" />
+              <View>
+                <Text style={styles.chatbotText}>¿Tiene dudas?</Text>
+                <Text style={styles.chatbotTextBold}>Hablar con Sali</Text>
+              </View>
             </View>
-            <Text style={styles.chatbotChevron}>›</Text>
+            <Icono nombre="siguiente" size={22} color="#1a1006" />
           </Pressable>
         )}
       </ScrollView>
