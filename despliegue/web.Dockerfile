@@ -5,9 +5,9 @@ WORKDIR /app
 COPY frontend/package*.json ./
 RUN npm install --no-audit --no-fund
 COPY frontend/ .
-# La web y la API comparten dominio, por eso la URL de la API es la del propio sitio
-ARG EXPO_PUBLIC_API_URL
-ENV EXPO_PUBLIC_API_URL=$EXPO_PUBLIC_API_URL
+# La web y la API comparten dominio: "/" hace que la app llame a /api en el mismo sitio desde el que se abrió,
+# así la misma imagen sirve en localhost, en la red local, detrás de un túnel o en un servidor
+ENV EXPO_PUBLIC_API_URL=/
 RUN echo '/// <reference types="expo/types" />' > expo-env.d.ts && npx expo export --platform web
 
 FROM caddy:2-alpine

@@ -6,7 +6,9 @@ const hostDelServidor = Constants.expoConfig?.hostUri?.split(':')[0];
 const esHostLocal = !hostDelServidor || hostDelServidor === 'localhost' || hostDelServidor === '127.0.0.1';
 
 const resolverApiUrl = () => {
-  if (process.env.EXPO_PUBLIC_API_URL) return process.env.EXPO_PUBLIC_API_URL;
+  // EXPO_PUBLIC_API_URL="/" significa "mismo sitio": la versión web servida por Docker llama a /api
+  // en el dominio desde el que se abrió (localhost, la IP de la red, un túnel o un servidor).
+  if (process.env.EXPO_PUBLIC_API_URL) return process.env.EXPO_PUBLIC_API_URL.replace(/\/$/, '');
   if (!esHostLocal) return `http://${hostDelServidor}:3000`;
   return Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000';
 };

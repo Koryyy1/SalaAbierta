@@ -1,5 +1,13 @@
-# T11: HTTPS automático (Let's Encrypt) para el dominio indicado en DOMINIO
-{$DOMINIO} {
+# T11: DOMINIO=:80 sirve por HTTP en el propio equipo (localhost, red local o detrás de un túnel).
+# Con un dominio real (por ejemplo 54-12-34-56.sslip.io) Caddy obtiene el certificado HTTPS automáticamente.
+{
+	servers {
+		# Conserva la IP real del visitante cuando llega a través de un túnel (contenedor en la red interna)
+		trusted_proxies static private_ranges
+	}
+}
+
+{$DOMINIO::80} {
 	encode zstd gzip
 
 	# La API REST se atiende en el contenedor del backend
