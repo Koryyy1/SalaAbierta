@@ -1,0 +1,85 @@
+# T11: SalaAbierta con Docker (PostgreSQL + API + web). Ver DESPLIEGUE.md
+# Uso: copiar .env.produccion.example a .env, completarlo y ejecutar  docker compose up -d --build
+# Para compartirlo por Internet con un túnel:  docker compose --profile tunel up -d --build
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-sala_abierta_db}
+      POSTGRES_USER: ${DB_USER:-salaabierta}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Falta DB_PASSWORD en .env}
+    volumes:
+      - datos_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Sin puertos publicados: la base solo es accesible desde la red interna de Docker
+
+  api:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      # Confía en los proxies de la red interna (Caddy y el túnel) para conocer la IP real del visitante
+      TRUST_PROXY: loopback,uniquelocal
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-sala_abierta_db}
+      DB_USER: ${DB_USER:-salaabierta}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?Falta JWT_SECRET en .env}
+      # La web se sirve desde el mismo sitio que la API, así que CORS solo hace falta para otros orígenes
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash-lite}
+
+  web:
+    build:
+      context: .
+      dockerfile: despliegue/web.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      DOMINIO: ${DOMINIO:-:80}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - datos_caddy:/data
+      - config_caddy:/config
+
+  # Túnel de Cloudflare: entrega un enlace https://<algo>.trycloudflare.com que apunta a este equipo.
+  # Sin cuenta ni configuración; el enlace cambia cada vez que se reinicia el túnel.
+  tunel:
+    image: cloudflare/cloudflared:latest
+    profiles: [tunel]
+    restart: unless-stopped
+    depends_on:
+      - web
+    command: tunnel --no-autoupdate --url http://web:80
+
+  # Alternativa con ngrok y dominio fijo gratuito (útil para el APK, que necesita una URL que no cambie).
+  # Requiere NGROK_AUTHTOKEN y NGROK_DOMINIO en .env.
+  ngrok:
+    image: ngrok/ngrok:latest
+    profiles: [ngrok]
+    restart: unless-stopped
+    depends_on:
+      - web
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN:-}
+    command: http web:80 --url=https://${NGROK_DOMINIO:-sin-dominio}
+
+volumes:
+  datos_postgres:
+  datos_caddy:
+  config_caddy:
