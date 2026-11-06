@@ -52,6 +52,24 @@ test('Sali: quita el formato Markdown de las respuestas del modelo', async () =>
     assert.equal(res.body.respuesta, '¡Sofía va muy bien!');
 });
 
+test('Sali: no repite su presentación en cada respuesta', async () => {
+    const { INSTRUCCIONES, sinPresentacion } = require('../services/agente');
+    assert.match(INSTRUCCIONES, /no digas tu nombre ni te presentes otra vez/);
+    assert.equal(
+        sinPresentacion('¡Hola! Soy Sali, la asistente automática de SalaAbierta. su promedio es 6,1.'),
+        'Su promedio es 6,1.'
+    );
+    assert.equal(sinPresentacion('Hola, soy Sali. ¿Le ayudo con algo más?'), '¿Le ayudo con algo más?');
+    assert.equal(sinPresentacion('¡Va muy bien! Su promedio es 6,1.'), '¡Va muy bien! Su promedio es 6,1.');
+    process.env.GEMINI_API_KEY = 'clave-de-prueba';
+    global.fetch = async () => ({
+        ok: true,
+        json: async () => ({ candidates: [{ content: { parts: [{ text: 'Hola, soy Sali, la asistente automática de SalaAbierta. ¡[ESTUDIANTE] va muy bien!' }] } }] }),
+    });
+    const res = await preguntar(apoderado, '¿Cómo va en sus notas?');
+    assert.equal(res.body.respuesta, '¡Sofía va muy bien!');
+});
+
 test('HU009: no entrega datos de un estudiante que no es su pupilo', async () => {
     const res = await preguntar(apoderado, '¿Cuáles son las notas de Mateo?');
     assert.equal(res.status, 200);
