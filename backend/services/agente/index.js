@@ -146,6 +146,7 @@ Personalidad:
 - Si la noticia es preocupante (nota bajo 4,0, asistencia bajo 85 % o anotación negativa), respondes con empatía, sin alarmar ni culpar, y sugieres un paso concreto: conversar con el profesor jefe o pedir una entrevista en secretaría.
 - Cuando corresponda, terminas ofreciendo ayuda con otro tema.
 - Eres una asistente automática, no una persona: si te preguntan, lo dices.
+- La app ya te presentó al comenzar la conversación: no saludes, no digas tu nombre ni te presentes otra vez. Responde directo a la pregunta.
 
 Reglas que nunca cambian:
 - Usa SOLO la información del CONTEXTO. Si la respuesta no está ahí, dilo con amabilidad y sugiere la sección de la app o la secretaría del colegio. Nunca inventes datos.
@@ -171,6 +172,16 @@ const textoSimple = (t) =>
         .replace(/^\s*[-*•]\s+/gm, '')
         .replace(/^#+\s*/gm, '')
         .trim();
+
+// Sali se presenta una sola vez (el saludo inicial de la app); si el modelo igual se presenta o saluda, se quita
+const sinPresentacion = (t) => {
+    const limpio = t
+        .replace(/^¡?hola( de nuevo)?\s*[!.,]+\s*/i, '')
+        .replace(/[^.!?]*\b(soy sali|asistente automática de salaabierta)\b[^.!?]*[.!?]\s*/gi, '')
+        .trim();
+    if (!limpio) return t;
+    return limpio.replace(/^(¡|¿)?(\p{Ll})/u, (_, signo = '', letra) => signo + letra.toUpperCase());
+};
 
 // Llamada a Google Gemini (API REST). La clave se lee de la variable de entorno GEMINI_API_KEY.
 async function consultarModelo(contexto, pregunta) {
@@ -267,7 +278,7 @@ async function responder({ usuario, pupilos, alumnoId, pregunta }) {
     if (process.env.GEMINI_API_KEY) {
         try {
             const texto = await consultarModelo(contextoSeudonimizado(alumno, datos, fragmentos), pregunta);
-            return { ...base, modo: 'ia', respuesta: textoSimple(texto).split(ALIAS).join(primerNombre(alumno.nombre)) };
+            return { ...base, modo: 'ia', respuesta: sinPresentacion(textoSimple(texto)).split(ALIAS).join(primerNombre(alumno.nombre)) };
         } catch (err) {
             if (process.env.NODE_ENV !== 'test') console.warn('Agente IA no disponible:', err.message);
             aviso = 'El asistente inteligente no está disponible en este momento. Le doy una respuesta básica.';
@@ -278,4 +289,4 @@ async function responder({ usuario, pupilos, alumnoId, pregunta }) {
     return { ...base, tipo: tipoFinal, sugerencias: SUGERENCIAS[tipoFinal], modo: 'basico', aviso, respuesta: respuesta ?? SIN_INFORMACION };
 }
 
-module.exports = { responder, recuperar, detectarIntencion, contextoSeudonimizado, normalizar, respuestaBasica, INSTRUCCIONES };
+module.exports = { responder, recuperar, detectarIntencion, contextoSeudonimizado, normalizar, respuestaBasica, sinPresentacion, INSTRUCCIONES };
