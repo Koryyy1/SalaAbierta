@@ -116,8 +116,9 @@ export function useAsync<T>(loader: () => Promise<T>, deps: unknown[]) {
   return { data, error, loading, reload };
 }
 
-export function Screen({ title, children }: { title: string; children: ReactNode }) {
+export function Screen({ title, children, alFinal }: { title: string; children: ReactNode; alFinal?: boolean }) {
   const router = useRouter();
+  const scroll = useRef<ScrollView>(null);
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.topBar}>
@@ -132,7 +133,12 @@ export function Screen({ title, children }: { title: string; children: ReactNode
         </Pressable>
         <Text style={styles.title}>{title}</Text>
       </View>
-      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        ref={scroll}
+        contentContainerStyle={styles.body}
+        keyboardShouldPersistTaps="handled"
+        // alFinal: pantallas tipo chat, que bajan solas al último mensaje
+        onContentSizeChange={() => alFinal && scroll.current?.scrollToEnd({ animated: true })}>
         {children}
       </ScrollView>
     </SafeAreaView>
@@ -261,13 +267,21 @@ export function Empty({ text, icono = 'vacio' }: { text: string; icono?: NombreI
 }
 
 // Pantalla de apoderado: elige pupilo (solo los suyos) y entrega el seleccionado
-export function PupilScreen({ title, children }: { title: string; children: (alumno: Alumno) => ReactNode }) {
+export function PupilScreen({
+  title,
+  children,
+  alFinal,
+}: {
+  title: string;
+  children: (alumno: Alumno) => ReactNode;
+  alFinal?: boolean;
+}) {
   const { data: pupilos, error, loading } = useAsync(() => api.pupilos(), []);
   const [elegido, setElegido] = useState<number | null>(null);
   const alumno = pupilos?.find((p) => p.id === elegido) ?? pupilos?.[0];
 
   return (
-    <Screen title={title}>
+    <Screen title={title} alFinal={alFinal}>
       {loading ? <Loading /> : <Notice text={error} />}
       {pupilos && pupilos.length > 1 && (
         <View style={styles.row}>

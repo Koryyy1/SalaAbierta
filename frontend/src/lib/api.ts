@@ -40,6 +40,7 @@ export type RespuestaAgente = {
   modo: 'ia' | 'basico';
   seccion: string | null;
   aviso?: string | null;
+  sugerencias?: string[];
 };
 export type Alerta = {
   id: number;
