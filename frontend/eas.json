@@ -10,7 +10,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "payable-crabgrass-legal.ngrok-free.dev"
+        "EXPO_PUBLIC_API_URL": "https://payable-crabgrass-legal.ngrok-free.dev"
       }
     }
   }
