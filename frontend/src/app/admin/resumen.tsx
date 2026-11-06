@@ -1,19 +1,33 @@
 import { StyleSheet, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { Card, colors, Empty, Loading, Notice, Screen, useAsync } from '@/components/ui';
+import { Card, colors, Empty, Loading, Notice, Screen, useAsync, useContador } from '@/components/ui';
 import { api } from '@/lib/api';
 import { Text } from '@/components/texto';
 
 const decimal = (n: number) => n.toLocaleString('es-CL', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
-function Indicador({ etiqueta, valor, alerta }: { etiqueta: string; valor: string; alerta?: boolean }) {
+// Indicador con número que sube desde 0 al aparecer
+function Indicador({
+  etiqueta,
+  valor,
+  formato = (n) => String(Math.round(n)),
+  alerta,
+}: {
+  etiqueta: string;
+  valor: number | null;
+  formato?: (n: number) => string;
+  alerta?: boolean;
+}) {
+  const actual = useContador(valor);
   return (
-    <View style={styles.indicador}>
+    <View style={styles.indicador} accessible accessibilityLabel={`${etiqueta}: ${valor === null ? 'sin datos' : formato(valor)}`}>
       <Text style={styles.etiqueta}>{etiqueta}</Text>
-      <Text style={[styles.valor, alerta && { color: colors.danger }]}>{valor}</Text>
+      <Text style={[styles.valor, alerta && { color: colors.danger }]}>{actual === null ? '—' : formato(actual)}</Text>
     </View>
   );
 }
+const porciento = (n: number) => `${Math.round(n)}%`;
 
 // Dirección: indicadores agregados por curso (sin datos individuales de alumnos)
 export default function ResumenColegio() {
@@ -26,22 +40,23 @@ export default function ResumenColegio() {
         <Card>
           <Text style={styles.seccion}>TODO EL COLEGIO</Text>
           <View style={styles.fila}>
-            <Indicador etiqueta="Alumnos" valor={String(data.colegio.alumnos)} />
-            <Indicador etiqueta="Asistencia" valor={data.colegio.asistencia === null ? '—' : `${data.colegio.asistencia}%`} />
+            <Indicador etiqueta="Alumnos" valor={data.colegio.alumnos} />
+            <Indicador etiqueta="Asistencia" valor={data.colegio.asistencia} formato={porciento} />
           </View>
           <View style={styles.fila}>
-            <Indicador etiqueta="Cursos" valor={String(data.colegio.cursos)} />
-            <Indicador etiqueta="Alumnos con alerta" valor={String(data.colegio.alumnosConAlerta)} alerta={data.colegio.alumnosConAlerta > 0} />
+            <Indicador etiqueta="Cursos" valor={data.colegio.cursos} />
+            <Indicador etiqueta="Alumnos con alerta" valor={data.colegio.alumnosConAlerta} alerta={data.colegio.alumnosConAlerta > 0} />
           </View>
         </Card>
       )}
       {data && !data.datos.length && <Empty text="No hay cursos registrados." />}
-      {data?.datos.map((c) => (
-        <Card key={c.id}>
+      {data?.datos.map((c, i) => (
+        <Animated.View key={c.id} entering={FadeInDown.delay(150 + i * 90).duration(320)}>
+        <Card>
           <Text style={styles.curso}>{c.nombre}</Text>
           <View style={styles.fila}>
-            <Indicador etiqueta="Promedio" valor={c.promedio === null ? '—' : decimal(c.promedio)} alerta={c.promedio !== null && c.promedio < 4} />
-            <Indicador etiqueta="Asistencia" valor={c.asistencia === null ? '—' : `${c.asistencia}%`} alerta={c.asistencia !== null && c.asistencia < 85} />
+            <Indicador etiqueta="Promedio" valor={c.promedio} formato={decimal} alerta={c.promedio !== null && c.promedio < 4} />
+            <Indicador etiqueta="Asistencia" valor={c.asistencia} formato={porciento} alerta={c.asistencia !== null && c.asistencia < 85} />
           </View>
           <Text style={styles.detalle}>
             {c.alumnos} {c.alumnos === 1 ? 'alumno' : 'alumnos'} ·{' '}
@@ -50,6 +65,7 @@ export default function ResumenColegio() {
               : 'sin alertas activas'}
           </Text>
         </Card>
+        </Animated.View>
       ))}
       <Text style={styles.nota}>
         Los indicadores se calculan con todas las notas y la asistencia registradas. El detalle por alumno lo ve cada profesor en sus

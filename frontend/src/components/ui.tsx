@@ -233,6 +233,29 @@ export function Notice({ text, tone = 'danger' }: { text: string | null; tone?: 
   );
 }
 
+// Número que "cuenta" desde 0 hasta su valor en ~0,7 s (inmediato si se reduce el movimiento)
+export function useContador(valor: number | null, duracion = 700) {
+  const reducir = useReducedMotion();
+  const [actual, setActual] = useState(valor === null || reducir ? valor : 0);
+  useEffect(() => {
+    if (valor === null || reducir) {
+      setActual(valor);
+      return;
+    }
+    let cuadro = 0;
+    const inicio = Date.now();
+    const paso = () => {
+      const t = Math.min((Date.now() - inicio) / duracion, 1);
+      const suave = 1 - Math.pow(1 - t, 3); // desacelera al final
+      setActual(valor * suave);
+      if (t < 1) cuadro = requestAnimationFrame(paso);
+    };
+    cuadro = requestAnimationFrame(paso);
+    return () => cancelAnimationFrame(cuadro);
+  }, [valor, reducir, duracion]);
+  return actual;
+}
+
 // Carga con siluetas: tarjetas que "respiran" mientras llegan los datos (estáticas si se reduce el movimiento)
 export function Loading({ filas = 2 }: { filas?: number }) {
   const reducir = useReducedMotion();

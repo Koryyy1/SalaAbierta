@@ -13,8 +13,9 @@ import Animated, {
 import { Text } from '@/components/texto';
 import { colors } from '@/components/ui';
 
-// Avatar original de Sali: una burbuja de diálogo con cara amable, en los colores de SalaAbierta.
+// Avatar original de Sali: un búho con lentes, en los colores de SalaAbierta.
 // Parpadea de vez en cuando (salvo que el teléfono tenga activado "Reducir movimiento").
+// Las medidas están en una grilla de 100 × 100 y se escalan con "size".
 export function SaliAvatar({ size = 44 }: { size?: number }) {
   const reducir = useReducedMotion();
   const parpado = useSharedValue(1);
@@ -25,28 +26,49 @@ export function SaliAvatar({ size = 44 }: { size?: number }) {
       -1,
     );
   }, [reducir, parpado]);
-  const ojos = useAnimatedStyle(() => ({ transform: [{ scaleY: parpado.value }] }));
-  const ojo = { width: size * 0.13, height: size * 0.17, borderRadius: size * 0.08 };
+  const pupila = useAnimatedStyle(() => ({ transform: [{ scaleY: parpado.value }] }));
+  const u = (v: number) => (v * size) / 100;
+  const caja = (x: number, y: number, w: number, h: number) => ({ position: 'absolute' as const, left: u(x), top: u(y), width: u(w), height: u(h) });
+  const oreja = (x: number, giro: string) => ({
+    ...caja(x, 2, 0, 0),
+    borderLeftWidth: u(11),
+    borderRightWidth: u(11),
+    borderBottomWidth: u(26),
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderBottomColor: CAFE,
+    transform: [{ rotate: giro }],
+  });
 
   return (
-    <View accessible={false} style={{ width: size, height: size * 1.1 }}>
-      <View style={[styles.cara, { width: size, height: size, borderRadius: size / 2 }]}>
-        <Animated.View style={[styles.fila, { gap: size * 0.2, marginTop: size * 0.1 }, ojos]}>
-          <View style={[styles.ojo, ojo]} />
-          <View style={[styles.ojo, ojo]} />
-        </Animated.View>
-        <View
-          style={[
-            styles.sonrisa,
-            { width: size * 0.36, height: size * 0.18, borderBottomLeftRadius: size * 0.2, borderBottomRightRadius: size * 0.2, borderWidth: size * 0.05 },
-          ]}
-        />
-      </View>
-      {/* "Colita" de burbuja de diálogo */}
-      <View style={[styles.cola, { left: size * 0.12, bottom: 0, borderTopWidth: size * 0.22, borderRightWidth: size * 0.2 }]} />
+    <View accessible={false} style={{ width: size, height: size }}>
+      <View style={oreja(10, '-18deg')} />
+      <View style={oreja(68, '18deg')} />
+      <View style={[caja(5, 12, 90, 86), { backgroundColor: CAFE, borderRadius: u(45) }]} />
+      <View style={[caja(14, 24, 72, 66), { backgroundColor: CREMA, borderRadius: u(36) }]} />
+      {/* Lentes */}
+      <View style={[caja(13, 31, 36, 36), styles.lente, { borderRadius: u(18), borderWidth: u(4.5) }]} />
+      <View style={[caja(51, 31, 36, 36), styles.lente, { borderRadius: u(18), borderWidth: u(4.5) }]} />
+      <View style={[caja(47, 43, 6, 4), { backgroundColor: TINTA }]} />
+      {/* Ojos */}
+      <Animated.View style={[caja(24.5, 42.5, 13, 13), { backgroundColor: TINTA, borderRadius: u(6.5) }, pupila]} />
+      <Animated.View style={[caja(62.5, 42.5, 13, 13), { backgroundColor: TINTA, borderRadius: u(6.5) }, pupila]} />
+      <View style={[caja(29, 44.5, 4, 4), { backgroundColor: '#ffffff', borderRadius: u(2) }]} />
+      <View style={[caja(67, 44.5, 4, 4), { backgroundColor: '#ffffff', borderRadius: u(2) }]} />
+      {/* Pico */}
+      <View
+        style={[
+          caja(43, 67, 0, 0),
+          { borderLeftWidth: u(7), borderRightWidth: u(7), borderTopWidth: u(12), borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: colors.orange },
+        ]}
+      />
     </View>
   );
 }
+
+const CAFE = '#5d3b2b';
+const CREMA = '#f6e6cf';
+const TINTA = '#2a1b12';
 
 // Tres puntos que saltan mientras Sali "escribe"; texto estático si se reduce el movimiento
 export function Escribiendo() {
@@ -71,18 +93,8 @@ function Punto({ retraso }: { retraso: number }) {
 }
 
 const styles = StyleSheet.create({
-  cara: { alignItems: 'center', backgroundColor: colors.orange, justifyContent: 'center' },
   fila: { alignItems: 'center', flexDirection: 'row', gap: 6 },
-  ojo: { backgroundColor: '#2a1b12' },
-  sonrisa: { borderColor: '#2a1b12', borderTopWidth: 0, marginTop: 3 },
-  cola: {
-    borderRightColor: 'transparent',
-    borderTopColor: colors.orange,
-    height: 0,
-    position: 'absolute',
-    transform: [{ rotate: '20deg' }],
-    width: 0,
-  },
+  lente: { backgroundColor: '#ffffff', borderColor: TINTA },
   punto: { backgroundColor: colors.brown, borderRadius: 5, height: 10, width: 10 },
   escribiendoTexto: { color: colors.brown, fontSize: 15 },
 });
