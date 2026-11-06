@@ -14,6 +14,7 @@ import Animated, {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Icono, type NombreIcono } from '@/components/icono';
+import { SaliAvatar } from '@/components/sali';
 import { formatFecha, LogoutLink, useContador, vibrar } from '@/components/ui';
 import { api, type ResumenPupilo } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -210,7 +211,7 @@ export default function HomeScreen() {
             accessibilityLabel="Hablar con Sali, la asistente de SalaAbierta"
             style={({ pressed }) => [styles.chatbotButton, pressed && styles.chatbotButtonPressed]}>
             <View style={{ alignItems: 'center', flexDirection: 'row', gap: 14 }}>
-              <Icono nombre="chat" size={28} color="#1a1006" />
+              <SaliAvatar size={46} />
               <View>
                 <Text style={styles.chatbotText}>¿Tiene dudas?</Text>
                 <Text style={styles.chatbotTextBold}>Hablar con Sali</Text>
