@@ -10,7 +10,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://54-12-34-56.sslip.io"
+        "EXPO_PUBLIC_API_URL": "payable-crabgrass-legal.ngrok-free.dev"
       }
     }
   }
