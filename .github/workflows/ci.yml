@@ -81,6 +81,8 @@ jobs:
             -d '{"perfil":"apoderado"}' | sed -E 's/.*"token":"([^"]+)".*/\1/')
           curl -fsS http://localhost/api/cursos/1/horario -H "Authorization: Bearer $TOKEN" | grep -q Matemática
           curl -fsS http://localhost/horario | grep -qi '<html'
+          # La base de datos trabaja en la hora del colegio
+          docker compose exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc "SHOW timezone"' | grep -q America/Santiago
       - name: Registros si falla
         if: failure()
         run: docker compose logs --no-color | tail -100

@@ -58,7 +58,7 @@ export function textoCertificado(c: Certificado): TextoCertificado {
         ? `${d.colegio} certifica que ${d.alumno}, estudiante del curso ${d.curso}, registra ${plural(d.dias, 'día de clases', 'días de clases')} en el año escolar ${d.anio}: asistió ${plural(d.presentes ?? 0, 'día', 'días')} (${plural(d.atrasos ?? 0, 'con atraso', 'con atraso')}), tiene ${plural(d.ausentes ?? 0, 'ausencia', 'ausencias')} y ${plural(d.justificados ?? 0, 'inasistencia justificada', 'inasistencias justificadas')}.`
         : `${d.colegio} certifica que ${d.alumno}, estudiante del curso ${d.curso}, aún no registra asistencia en el año escolar ${d.anio}.`,
     );
-    if (d.porcentaje !== null && d.porcentaje !== undefined) parrafos.push(`Porcentaje de asistencia a la fecha: ${d.porcentaje} %.`);
+    if (d.porcentaje !== null && d.porcentaje !== undefined) parrafos.push(`Porcentaje de asistencia a la fecha: ${d.porcentaje}%.`);
   }
 
   parrafos.push('Se extiende el presente certificado a petición del apoderado, para los fines que estime convenientes.');

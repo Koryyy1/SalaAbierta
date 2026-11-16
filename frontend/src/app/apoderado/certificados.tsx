@@ -142,7 +142,7 @@ function Certificados({ alumnoId }: { alumnoId: number }) {
         <Card key={c.id}>
           <Text style={styles.nombre}>{NOMBRE_CERTIFICADO[c.tipo]}</Text>
           <Text style={styles.descripcion}>
-            {formatFecha(c.emitido_en)} · {c.codigo}
+            {formatFecha(c.contenido.fecha)} · {c.codigo}
           </Text>
           <Button label="Ver certificado" tone="secondary" icono="siguiente" onPress={() => setAbierto(c)} />
         </Card>

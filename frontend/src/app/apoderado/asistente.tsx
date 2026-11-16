@@ -1,7 +1,7 @@
 import * as Speech from 'expo-speech';
 import { useRouter, type Href } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { Icono } from '@/components/icono';
@@ -29,6 +29,25 @@ const NOMBRE_SECCION: Record<string, string> = {
 
 // Sali saluda y se presenta una sola vez por sesión; al volver a la pantalla o cambiar de pupilo va directo al tema
 let presentadaA: number | null = null;
+const CLAVE_PRESENTADA = 'sala-abierta-sali-presentada';
+
+// En la web también se recuerda al recargar la página (mientras dure la pestaña)
+function yaSePresento(usuarioId: number | null) {
+  if (presentadaA === usuarioId) return true;
+  try {
+    return Platform.OS === 'web' && window.sessionStorage.getItem(CLAVE_PRESENTADA) === String(usuarioId);
+  } catch {
+    return false;
+  }
+}
+function recordarPresentacion(usuarioId: number | null) {
+  presentadaA = usuarioId;
+  try {
+    if (Platform.OS === 'web') window.sessionStorage.setItem(CLAVE_PRESENTADA, String(usuarioId));
+  } catch {
+    // Sin almacenamiento disponible: se recuerda solo mientras la app esté abierta
+  }
+}
 
 const primerNombre = (nombre?: string | null) => (nombre ?? '').split(' ')[0];
 
@@ -85,9 +104,9 @@ function Chat({ alumno }: { alumno: Alumno }) {
   // Al salir de la pantalla se detiene la lectura en voz alta
   useEffect(() => () => void Speech.stop(), []);
 
-  const [primeraVez] = useState(() => presentadaA !== (usuario?.id ?? null));
+  const [primeraVez] = useState(() => !yaSePresento(usuario?.id ?? null));
   useEffect(() => {
-    presentadaA = usuario?.id ?? null;
+    recordarPresentacion(usuario?.id ?? null);
   }, [usuario?.id]);
   const saludo = primeraVez
     ? `Hola, ${primerNombre(usuario?.nombre)}. Soy Sali, la asistente automática de SalaAbierta. Puedo contarle cómo va ${primerNombre(alumno.nombre)} en notas, asistencia y anotaciones, su horario de clases, o ayudarle a usar la aplicación. ¿En qué le ayudo?`

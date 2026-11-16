@@ -100,7 +100,7 @@ router.get('/certificados/verificar/:codigo', requiereRol('Administrador'), asyn
     if (!/^SA-\d{4}-[A-Z0-9]{8}$/.test(codigo)) return error(res, 400, 'El código debe tener el formato SA-2026-XXXXXXXX.');
     const { rows } = await pool.query(
         `SELECT c.tipo, c.codigo, c.contenido->>'alumno' AS alumno, c.contenido->>'curso' AS curso,
-                to_char(c.emitido_en, 'YYYY-MM-DD"T"HH24:MI:SS') AS emitido_en, u.nombre AS solicitado_por
+                c.contenido->>'fecha' AS emitido_en, u.nombre AS solicitado_por
          FROM certificados c JOIN usuarios u ON u.id = c.solicitado_por WHERE c.codigo = $1`,
         [codigo]
     );
