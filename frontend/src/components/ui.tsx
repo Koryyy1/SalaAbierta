@@ -82,6 +82,7 @@ export const colors = {
   ok: '#2e7d32',
   warn: '#8a5200', // oscurecido para contraste 4,5:1 sobre el fondo arena (WCAG AA)
   textoSecundario: '#5d3b2b',
+  crema: '#fbf4ec', // fondo general, el mismo del ícono de la app
 };
 
 export function messageOf(e: unknown) {
@@ -212,10 +213,11 @@ export function Chip({ label, selected, onPress, color }: { label: string; selec
       accessibilityState={{ selected }}
       style={({ pressed }) => [
         styles.chip,
-        selected && { backgroundColor: color ?? colors.brown, borderColor: color ?? colors.brown },
+        // Sin color propio, la opción elegida va en naranjo: se distingue tanto sobre el fondo café como sobre el arena
+        selected && { backgroundColor: color ?? colors.orange, borderColor: color ?? colors.orange },
         pressed && { transform: [{ scale: 0.96 }] },
       ]}>
-      <Text style={[styles.chipText, selected && { color: colors.white }]}>{label}</Text>
+      <Text style={[styles.chipText, selected && { color: color ? colors.white : '#1a1006' }]}>{label}</Text>
     </Pressable>
   );
 }
@@ -384,6 +386,10 @@ export function LogoutLink() {
   );
 }
 
+// Notas y promedios con coma decimal, como se escriben en Chile: 6,0
+export const formatNota = (n: number | null | undefined) =>
+  n === null || n === undefined ? '—' : n.toLocaleString('es-CL', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
 export const formatFecha = (iso: string) => {
   const [y, m, d] = iso.slice(0, 10).split('-');
   return `${d}-${m}-${y}`;
@@ -438,7 +444,7 @@ export function SelectorFecha({ value, onChange, max }: { value: string; onChang
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.white },
+  safe: { flex: 1, backgroundColor: colors.crema },
   topBar: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12, gap: 6 },
   backZona: { alignItems: 'center', alignSelf: 'flex-start', flexDirection: 'row', gap: 2, minHeight: 32 },
   back: { color: colors.muted, fontSize: 15, fontWeight: '700' },

@@ -17,7 +17,7 @@ export default function UmbralesAdmin() {
 
   useEffect(() => {
     if (!data) return;
-    setPromedio(String(data.promedio_minimo).replace('.', ','));
+    setPromedio(data.promedio_minimo.toLocaleString('es-CL', { minimumFractionDigits: 1, maximumFractionDigits: 1 }));
     setAsistencia(String(data.asistencia_minima));
     setNotas(String(data.notas_minimas));
     setDias(String(data.dias_minimos));

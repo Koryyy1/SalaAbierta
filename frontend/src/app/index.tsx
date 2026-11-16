@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -161,13 +162,11 @@ export default function HomeScreen() {
         <View style={{ flexShrink: 1 }}>
           <Text style={styles.eyebrow}>{eyebrow}</Text>
 
-          <Text style={styles.welcomeText}>Bienvenido, {usuario?.nombre}</Text>
+          <Text style={styles.welcomeText}>Hola, {usuario?.nombre?.split(' ')[0]}</Text>
           <LogoutLink />
         </View>
-        <View style={styles.brandBlock}>
-          <View style={styles.brandMark}>
-            <Text style={styles.brandMarkText}>SA</Text>
-          </View>
+        <View style={styles.brandBlock} accessible accessibilityLabel="Sala Abierta">
+          <Image source={require('@/assets/images/logo-libros.png')} style={styles.brandLogo} contentFit="contain" />
           <Text style={styles.brandText}>SALA{'\n'}ABIERTA</Text>
         </View>
       </View>
@@ -233,7 +232,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fbf4ec',
   },
   header: {
     alignItems: 'center',
@@ -260,20 +259,7 @@ const styles = StyleSheet.create({
   brandBlock: {
     alignItems: 'center',
   },
-  brandMark: {
-    alignItems: 'center',
-    backgroundColor: '#5d3b2b',
-    borderRadius: 12,
-    height: 34,
-    justifyContent: 'center',
-    width: 34,
-  },
-  brandMarkText: {
-    color: '#e6c7a8',
-    fontSize: 13,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
+  brandLogo: { height: 40, width: 46 },
   brandText: {
     color: '#5d3b2b',
     fontSize: 9,

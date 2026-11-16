@@ -20,6 +20,7 @@ import { api, type EstadoAsistencia } from '@/lib/api';
 import { Text } from '@/components/texto';
 
 const ESTADOS: EstadoAsistencia[] = ['presente', 'ausente', 'atrasado', 'justificado'];
+const NOMBRE_ESTADO: Record<EstadoAsistencia, string> = { presente: 'Presente', ausente: 'Ausente', atrasado: 'Atrasado', justificado: 'Justificado' };
 const FECHA = /^\d{4}-\d{2}-\d{2}$/;
 
 function Pasar({ cursoId }: { cursoId: number }) {
@@ -117,7 +118,7 @@ function Pasar({ cursoId }: { cursoId: number }) {
               {ESTADOS.map((e) => (
                 <Chip
                   key={e}
-                  label={e}
+                  label={NOMBRE_ESTADO[e]}
                   selected={estados[r.alumno_id] === e}
                   color={colorEstado[e]}
                   onPress={() => setEstados((prev) => ({ ...prev, [r.alumno_id]: e }))}

@@ -10,6 +10,7 @@ import {
   Empty,
   Field,
   formatFecha,
+  formatNota,
   Loading,
   messageOf,
   Notice,
@@ -25,13 +26,13 @@ const notaOk = (n: number) => Number.isFinite(n) && n >= 1 && n <= 7 && Math.rou
 
 function FilaNota({ nota, onSaved }: { nota: Calificacion; onSaved: () => void }) {
   const [editando, setEditando] = useState(false);
-  const [valor, setValor] = useState(nota.nota.toFixed(1));
+  const [valor, setValor] = useState(formatNota(nota.nota));
   const [descripcion, setDescripcion] = useState(nota.descripcion);
   const [error, setError] = useState<string | null>(null);
   const toast = useToast();
 
   const cancelar = () => {
-    setValor(nota.nota.toFixed(1));
+    setValor(formatNota(nota.nota));
     setDescripcion(nota.descripcion);
     setError(null);
     setEditando(false);
@@ -39,7 +40,7 @@ function FilaNota({ nota, onSaved }: { nota: Calificacion; onSaved: () => void }
 
   const guardar = async () => {
     const n = parseNota(valor);
-    if (!notaOk(n)) return setError('La nota debe estar entre 1.0 y 7.0 (un decimal).');
+    if (!notaOk(n)) return setError('La nota debe estar entre 1,0 y 7,0, con un decimal.');
     if (!descripcion.trim()) return setError('La descripción no puede quedar vacía.');
     try {
       await api.editarCalificacion(nota.id, { nota: n, descripcion: descripcion.trim() });
@@ -55,7 +56,7 @@ function FilaNota({ nota, onSaved }: { nota: Calificacion; onSaved: () => void }
   return (
     <Card>
       <Text style={{ color: colors.ink, fontSize: 16, fontWeight: '800' }}>
-        {nota.asignatura} · {nota.nota.toFixed(1)}
+        {nota.asignatura} · {formatNota(nota.nota)}
       </Text>
       <Text style={{ color: colors.brown }}>
         {nota.descripcion} · {formatFecha(nota.fecha)}
@@ -91,7 +92,7 @@ function NotasAlumno({ alumnoId, cursoId }: { alumnoId: number; cursoId: number 
     const n = parseNota(nota);
     if (!asignatura) return setFormError('Elige la asignatura.');
     if (!descripcion.trim() || !notaOk(n)) {
-      return setFormError('Completa la descripción y una nota entre 1.0 y 7.0.');
+      return setFormError('Completa la descripción y una nota entre 1,0 y 7,0.');
     }
     try {
       await api.crearCalificacion(alumnoId, { asignatura, descripcion: descripcion.trim(), nota: n });
@@ -120,13 +121,13 @@ function NotasAlumno({ alumnoId, cursoId }: { alumnoId: number; cursoId: number 
           ))}
         </View>
         <Field label="Descripción" value={descripcion} onChangeText={setDescripcion} />
-        <Field label="Nota (1.0 - 7.0)" value={nota} onChangeText={setNota} keyboardType="decimal-pad" />
+        <Field label="Nota (1,0 a 7,0)" value={nota} onChangeText={setNota} keyboardType="decimal-pad" />
         <Notice text={formError} />
         <Button label="Registrar nota" onPress={crear} />
       </Card>
       {loading ? <Loading /> : <Notice text={error} />}
       {data && (
-        <Text style={{ color: colors.sand, fontWeight: '800' }}>Promedio: {data.promedio?.toFixed(1) ?? '—'}</Text>
+        <Text style={{ color: colors.sand, fontWeight: '800' }}>Promedio: {formatNota(data.promedio)}</Text>
       )}
       {data && !data.datos.length && <Empty text="Aún no hay calificaciones." />}
       {data?.datos.map((n) => <FilaNota key={`${n.id}-${n.nota}-${n.descripcion}`} nota={n} onSaved={reload} />)}
