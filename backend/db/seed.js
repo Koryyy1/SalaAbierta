@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
 
 const ROLES = ['Profesor', 'Apoderado', 'Administrador'];
-const ASIGNATURAS = ['Matemática', 'Lenguaje', 'Ciencias', 'Historia', 'Inglés', 'Artes Visuales', 'Educación Física'];
+const ASIGNATURAS = ['Matemática', 'Lenguaje', 'Ciencias', 'Historia', 'Inglés', 'Artes Visuales', 'Educación Física', 'Música', 'Tecnología', 'Orientación'];
 
 // Asignaturas que imparte la profesora de demostración en cada curso.
 // También se aplica a bases ya creadas que aún no tienen asignaciones.
@@ -23,6 +23,55 @@ async function asignarAsignaturasDemo(db) {
                  ON CONFLICT DO NOTHING`,
                 [prof[0].id, curso, asignatura]
             );
+        }
+    }
+}
+
+// Horario de demostración. Bloques de 45 minutos con dos recreos y almuerzo; el viernes termina a las 13:10.
+const BLOQUES = [
+    ['08:00', '08:45'],
+    ['08:45', '09:30'],
+    ['09:50', '10:35'],
+    ['10:35', '11:20'],
+    ['11:40', '12:25'],
+    ['12:25', '13:10'],
+    ['14:00', '14:45'],
+    ['14:45', '15:30'],
+];
+const [MAT, LEN, CIE, HIS, ING, ART, EFI, MUS, TEC, ORI] = ASIGNATURAS;
+// Una fila por día (lunes a viernes); cada elemento es la asignatura del bloque 1, 2, 3…
+const HORARIOS_DEMO = {
+    '5° Básico A': [
+        [MAT, MAT, LEN, LEN, CIE, CIE, ING, ING],
+        [LEN, LEN, MAT, MAT, HIS, HIS, EFI, EFI],
+        [CIE, CIE, ING, ING, MAT, MAT, ART, ART],
+        [HIS, HIS, LEN, LEN, MUS, MUS, TEC, TEC],
+        [MAT, MAT, LEN, LEN, ORI, ORI],
+    ],
+    '6° Básico B': [
+        [LEN, LEN, MAT, MAT, HIS, HIS, EFI, EFI],
+        [MAT, MAT, CIE, CIE, ING, ING, ART, ART],
+        [HIS, HIS, LEN, LEN, CIE, CIE, MUS, MUS],
+        [MAT, MAT, ING, ING, LEN, LEN, TEC, TEC],
+        [CIE, CIE, MAT, MAT, ORI, ORI],
+    ],
+};
+
+// También se aplica a bases ya creadas que aún no tienen horario (por ejemplo, un despliegue anterior).
+async function cargarHorarioDemo(db) {
+    const { rows: hay } = await db.query('SELECT 1 FROM horario LIMIT 1');
+    if (hay.length) return;
+    for (const [curso, semana] of Object.entries(HORARIOS_DEMO)) {
+        for (const [d, dia] of semana.entries()) {
+            for (const [b, asignatura] of dia.entries()) {
+                await db.query(
+                    `INSERT INTO horario (curso_id, dia, bloque, hora_inicio, hora_fin, asignatura_id)
+                     SELECT c.id, $2::smallint, $3::smallint, $4::varchar, $5::varchar, a.id FROM cursos c, asignaturas a
+                     WHERE c.nombre = $1::varchar AND a.nombre = $6::varchar
+                     ON CONFLICT DO NOTHING`,
+                    [curso, d + 1, b + 1, BLOQUES[b][0], BLOQUES[b][1], asignatura]
+                );
+            }
         }
     }
 }
@@ -52,7 +101,8 @@ module.exports = async function seed(db) {
     if (existentes.length) {
         // Bases creadas antes: el usuario de demostración de la dirección pasa a tener nombre de persona
         await db.query("UPDATE usuarios SET nombre = 'Patricia Vidal' WHERE email = 'admin@salaabierta.cl' AND nombre = 'Administrador'");
-        return asignarAsignaturasDemo(db);
+        await asignarAsignaturasDemo(db);
+        return cargarHorarioDemo(db);
     }
 
     const rolId = async (nombre) => (await db.query('SELECT id FROM roles WHERE nombre = $1', [nombre])).rows[0].id;
@@ -139,4 +189,5 @@ module.exports = async function seed(db) {
     ]);
 
     await asignarAsignaturasDemo(db);
+    await cargarHorarioDemo(db);
 };

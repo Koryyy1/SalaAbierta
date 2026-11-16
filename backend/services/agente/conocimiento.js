@@ -26,6 +26,18 @@ module.exports = [
         texto: 'Para confirmar que leyó un anuncio, entre a Muro del curso y presione el botón Confirmar recepción bajo el anuncio. El profesor puede ver quiénes confirmaron. También puede escribir un comentario y presionar Enviar comentario.',
     },
     {
+        id: 'uso-horario',
+        titulo: 'Cómo ver el horario de clases',
+        seccion: '/horario',
+        texto: 'El horario de clases del curso está en la sección Horario del menú principal. Elija el día de la semana para ver las asignaturas, sus horas y los recreos.',
+    },
+    {
+        id: 'uso-certificados',
+        titulo: 'Cómo obtener un certificado',
+        seccion: '/apoderado/certificados',
+        texto: 'En la sección Certificados del menú principal puede generar el certificado de alumno regular, el de notas y el de asistencia de su pupilo. Cada certificado lleva un código de verificación y se puede imprimir, guardar o compartir.',
+    },
+    {
         id: 'uso-pupilos',
         titulo: 'Varios pupilos',
         seccion: null,

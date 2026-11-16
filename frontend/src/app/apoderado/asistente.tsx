@@ -13,14 +13,22 @@ import { useAuth } from '@/lib/auth';
 
 type Mensaje = { id: number; de: 'apoderado' | 'sali'; texto: string; respuesta?: RespuestaAgente };
 
-const SUGERENCIAS_INICIALES = ['¿Cómo le va en las notas?', '¿Cuánta asistencia tiene?', '¿Tiene anotaciones?', '¿Hay anuncios nuevos?'];
+const SUGERENCIAS_INICIALES = ['¿Cómo le va en las notas?', '¿Cuánta asistencia tiene?', '¿Qué clases tiene hoy?', '¿Hay anuncios nuevos?'];
+
+// Respuestas fijas de la conversación (agradecimientos, temas ajenos al colegio): no llevan la marca "sin IA"
+const SIN_MARCA = ['cortesia', 'fuera_de_tema', 'denegado'];
 
 const NOMBRE_SECCION: Record<string, string> = {
   '/apoderado/notas': 'Ver notas',
   '/apoderado/asistencia': 'Ver asistencia',
   '/apoderado/anotaciones': 'Ver anotaciones',
   '/muro': 'Ir al muro',
+  '/horario': 'Ver horario',
+  '/apoderado/certificados': 'Ir a certificados',
 };
+
+// Sali saluda y se presenta una sola vez por sesión; al volver a la pantalla o cambiar de pupilo va directo al tema
+let presentadaA: number | null = null;
 
 const primerNombre = (nombre?: string | null) => (nombre ?? '').split(' ')[0];
 
@@ -54,7 +62,7 @@ function BurbujaSali({
             <Icono nombre={hablando ? 'detener' : 'parlante'} size={20} color={colors.brown} />
             <Text style={styles.botonVozTexto}>{hablando ? 'Detener' : 'Escuchar'}</Text>
           </Pressable>
-          {respuesta?.modo === 'basico' && !respuesta.aviso && <Text style={styles.modo}>Respuesta automática sin IA</Text>}
+          {respuesta?.modo === 'basico' && !respuesta.aviso && !SIN_MARCA.includes(respuesta.tipo) && <Text style={styles.modo}>Respuesta automática sin IA</Text>}
         </View>
         {respuesta?.seccion && NOMBRE_SECCION[respuesta.seccion] && (
           <Button label={NOMBRE_SECCION[respuesta.seccion]} tone="secondary" icono="siguiente" onPress={() => onIr(respuesta.seccion as Href)} />
@@ -77,7 +85,13 @@ function Chat({ alumno }: { alumno: Alumno }) {
   // Al salir de la pantalla se detiene la lectura en voz alta
   useEffect(() => () => void Speech.stop(), []);
 
-  const saludo = `Hola, ${primerNombre(usuario?.nombre)}. Soy Sali, la asistente automática de SalaAbierta. Puedo contarle cómo va ${primerNombre(alumno.nombre)} en notas, asistencia y anotaciones, o ayudarle a usar la aplicación. ¿En qué le ayudo?`;
+  const [primeraVez] = useState(() => presentadaA !== (usuario?.id ?? null));
+  useEffect(() => {
+    presentadaA = usuario?.id ?? null;
+  }, [usuario?.id]);
+  const saludo = primeraVez
+    ? `Hola, ${primerNombre(usuario?.nombre)}. Soy Sali, la asistente automática de SalaAbierta. Puedo contarle cómo va ${primerNombre(alumno.nombre)} en notas, asistencia y anotaciones, su horario de clases, o ayudarle a usar la aplicación. ¿En qué le ayudo?`
+    : `¿Qué le gustaría saber de ${primerNombre(alumno.nombre)}?`;
   const ultima = [...mensajes].reverse().find((m) => m.de === 'sali')?.respuesta;
   const sugerencias = ultima?.sugerencias ?? SUGERENCIAS_INICIALES;
 

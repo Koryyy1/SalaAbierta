@@ -142,3 +142,27 @@ CREATE TABLE IF NOT EXISTS profesor_asignaturas (
     asignatura_id INTEGER NOT NULL REFERENCES asignaturas(id),
     PRIMARY KEY (usuario_id, curso_id, asignatura_id)
 );
+
+-- Horario de clases de cada curso: un bloque por día (1 = lunes … 5 = viernes) y número de bloque.
+CREATE TABLE IF NOT EXISTS horario (
+    id SERIAL PRIMARY KEY,
+    curso_id INTEGER NOT NULL REFERENCES cursos(id),
+    dia SMALLINT NOT NULL CHECK (dia BETWEEN 1 AND 5),
+    bloque SMALLINT NOT NULL CHECK (bloque BETWEEN 1 AND 12),
+    hora_inicio VARCHAR(5) NOT NULL CHECK (hora_inicio ~ '^[0-2][0-9]:[0-5][0-9]$'),
+    hora_fin VARCHAR(5) NOT NULL CHECK (hora_fin ~ '^[0-2][0-9]:[0-5][0-9]$'),
+    asignatura_id INTEGER NOT NULL REFERENCES asignaturas(id),
+    UNIQUE (curso_id, dia, bloque)
+);
+
+-- Certificados emitidos desde la app. "contenido" guarda los datos tal como estaban al emitirlo,
+-- y "codigo" permite que la dirección compruebe que el documento es auténtico.
+CREATE TABLE IF NOT EXISTS certificados (
+    id SERIAL PRIMARY KEY,
+    alumno_id INTEGER NOT NULL REFERENCES alumnos(id),
+    tipo VARCHAR(20) NOT NULL CHECK (tipo IN ('alumno_regular', 'notas', 'asistencia')),
+    codigo VARCHAR(20) UNIQUE NOT NULL,
+    solicitado_por INTEGER NOT NULL REFERENCES usuarios(id),
+    contenido JSONB NOT NULL,
+    emitido_en TIMESTAMP NOT NULL DEFAULT NOW()
+);

@@ -23,6 +23,10 @@ const ICONOS = {
   parlante: { ios: 'speaker.wave.2', android: 'volume_up', web: 'volume_up' },
   detener: { ios: 'stop.circle', android: 'stop_circle', web: 'stop_circle' },
   enviar: { ios: 'paperplane.fill', android: 'send', web: 'send' },
+  horario: { ios: 'clock', android: 'schedule', web: 'schedule' },
+  certificado: { ios: 'doc.text', android: 'description', web: 'description' },
+  imprimir: { ios: 'printer', android: 'print', web: 'print' },
+  compartir: { ios: 'square.and.arrow.up', android: 'share', web: 'share' },
   escuela: { ios: 'building.columns', android: 'school', web: 'school' },
 } as const;
 

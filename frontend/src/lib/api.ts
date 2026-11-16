@@ -42,12 +42,45 @@ export type RegistroAuditoria = {
 };
 export type RespuestaAgente = {
   respuesta: string;
-  tipo: 'notas' | 'asistencia' | 'anotaciones' | 'muro' | 'uso' | 'denegado' | 'sin_datos';
+  tipo: 'notas' | 'asistencia' | 'anotaciones' | 'muro' | 'horario' | 'certificados' | 'uso' | 'denegado' | 'sin_datos' | 'fuera_de_tema' | 'cortesia';
   modo: 'ia' | 'basico';
   seccion: string | null;
   aviso?: string | null;
   sugerencias?: string[];
 };
+export type BloqueHorario = { dia: number; bloque: number; hora_inicio: string; hora_fin: string; asignatura: string; profesor: string | null };
+export type TipoCertificado = 'alumno_regular' | 'notas' | 'asistencia';
+export type Certificado = {
+  id: number;
+  alumno_id: number;
+  tipo: TipoCertificado;
+  codigo: string;
+  emitido_en: string;
+  contenido: {
+    colegio: string;
+    alumno: string;
+    curso: string;
+    anio: number;
+    fecha: string;
+    promedio?: number | null;
+    asignaturas?: { asignatura: string; cantidad: number; promedio: number }[];
+    dias?: number;
+    presentes?: number;
+    atrasos?: number;
+    ausentes?: number;
+    justificados?: number;
+    porcentaje?: number | null;
+  };
+};
+export type VerificacionCertificado = {
+  tipo: TipoCertificado;
+  codigo: string;
+  alumno: string;
+  curso: string;
+  emitido_en: string;
+  solicitado_por: string;
+};
+export type PerfilDemo = { id: string; etiqueta: string };
 export type Alerta = {
   id: number;
   alumno_id: number;
@@ -151,6 +184,8 @@ export const api = {
   login: (email: string, password: string) =>
     request<{ token: string; usuario: Usuario }>('POST', '/auth/login', { email, password }),
   me: () => request<{ usuario: Usuario }>('GET', '/auth/me'),
+  perfilesDemo: () => request<{ perfiles: PerfilDemo[] }>('GET', '/auth/demo').then((r) => r.perfiles),
+  loginDemo: (perfil: string) => request<{ token: string; usuario: Usuario }>('POST', '/auth/demo', { perfil }),
 
   cursos: () => request<Lista<Curso>>('GET', '/cursos').then((r) => r.datos),
   alumnosDeCurso: (cursoId: number) => request<Lista<Alumno>>('GET', `/cursos/${cursoId}/alumnos`).then((r) => r.datos),
@@ -187,6 +222,13 @@ export const api = {
   confirmacionesAnuncio: (id: number) => request<DetalleConfirmaciones>('GET', `/anuncios/${id}/confirmaciones`),
   confirmarAnuncio: (id: number) => request<unknown>('POST', `/anuncios/${id}/confirmar`),
   comentarAnuncio: (id: number, contenido: string) => request<unknown>('POST', `/anuncios/${id}/comentarios`, { contenido }),
+
+  horario: (cursoId: number) => request<{ hoy: number } & Lista<BloqueHorario>>('GET', `/cursos/${cursoId}/horario`),
+  certificados: (alumnoId: number) => request<Lista<Certificado>>('GET', `/alumnos/${alumnoId}/certificados`).then((r) => r.datos),
+  emitirCertificado: (alumnoId: number, tipo: TipoCertificado) =>
+    request<{ dato: Certificado }>('POST', `/alumnos/${alumnoId}/certificados`, { tipo }).then((r) => r.dato),
+  verificarCertificado: (codigo: string) =>
+    request<{ dato: VerificacionCertificado }>('GET', `/certificados/verificar/${encodeURIComponent(codigo.trim())}`).then((r) => r.dato),
 
   preguntarAgente: (pregunta: string, alumnoId: number) =>
     request<RespuestaAgente>('POST', '/agente/preguntar', { pregunta, alumnoId }),

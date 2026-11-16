@@ -92,10 +92,59 @@ test('HU009: rechaza un alumnoId que no es pupilo del apoderado (403)', async ()
     assert.equal((await preguntar(apoderado, '¿Cómo va?', { alumnoId: 2 })).status, 403);
 });
 
-test('HU009: si no tiene la información, lo dice y no inventa', async () => {
-    const res = await preguntar(apoderado, '¿Cuál es la capital de Francia?');
+test('HU009: si no tiene la información de un tema escolar, lo dice y no inventa', async () => {
+    const res = await preguntar(apoderado, '¿Cuánto cuesta la matrícula del próximo año?');
     assert.equal(res.body.tipo, 'sin_datos');
     assert.match(res.body.respuesta, /No encontré esa información/);
+});
+
+test('Sali: no responde preguntas ajenas al colegio y no las envía al modelo de IA', async () => {
+    process.env.GEMINI_API_KEY = 'clave-de-prueba';
+    let llamadas = 0;
+    global.fetch = async () => {
+        llamadas += 1;
+        return { ok: true, json: async () => ({ candidates: [{ content: { parts: [{ text: 'París.' }] } }] }) };
+    };
+    for (const pregunta of ['¿Cuál es la capital de Francia?', 'Dame una receta de pan amasado', 'Escribe un poema sobre el mar']) {
+        const res = await preguntar(apoderado, pregunta);
+        assert.equal(res.body.tipo, 'fuera_de_tema', pregunta);
+        assert.match(res.body.respuesta, /Solo puedo ayudarle con temas del colegio/);
+        assert.ok(res.body.sugerencias.length >= 2);
+    }
+    assert.equal(llamadas, 0, 'las preguntas fuera de tema no deben llegar al modelo');
+    const { INSTRUCCIONES } = require('../services/agente');
+    assert.match(INSTRUCCIONES, /Solo respondes temas escolares/);
+});
+
+test('Sali: quita cualquier saludo inicial del modelo y no devuelve el saludo del apoderado', async () => {
+    const { sinPresentacion } = require('../services/agente');
+    const casos = {
+        'Hola, Carolina. El promedio es 6,0.': 'El promedio es 6,0.',
+        '¡Hola, Carolina! Va muy bien.': 'Va muy bien.',
+        'Buenas tardes, estimada apoderada. La asistencia es 92%.': 'La asistencia es 92%.',
+        'Estimado apoderado: tiene 2 anotaciones.': 'Tiene 2 anotaciones.',
+        '¡Hola! Buenos días. Es un gusto saludarle. Su promedio es 5,5.': 'Su promedio es 5,5.',
+        'Buenas noticias: va muy bien.': 'Buenas noticias: va muy bien.',
+    };
+    for (const [entrada, esperado] of Object.entries(casos)) assert.equal(sinPresentacion(entrada), esperado);
+
+    const saludo = await preguntar(apoderado, 'Hola, buenas tardes');
+    assert.equal(saludo.body.tipo, 'cortesia');
+    assert.doesNotMatch(saludo.body.respuesta, /hola|buenas|soy sali/i);
+    const gracias = await preguntar(apoderado, 'Muchas gracias');
+    assert.equal(gracias.body.tipo, 'cortesia');
+    assert.match(gracias.body.respuesta, /Con gusto/);
+});
+
+test('Sali: responde el horario de clases y cómo obtener certificados', async () => {
+    const horario = await preguntar(apoderado, '¿Qué clases tiene el lunes?');
+    assert.equal(horario.body.tipo, 'horario');
+    assert.equal(horario.body.seccion, '/horario');
+    assert.match(horario.body.respuesta, /El lunes Sofía tiene: Matemática de 08:00 a 09:30/);
+    const certificado = await preguntar(apoderado, '¿Cómo pido un certificado de alumno regular?');
+    assert.equal(certificado.body.tipo, 'certificados');
+    assert.equal(certificado.body.seccion, '/apoderado/certificados');
+    assert.match(certificado.body.respuesta, /sección Certificados/);
 });
 
 test('HU009: solo el rol Apoderado usa el asistente y la pregunta es obligatoria', async () => {
@@ -135,12 +184,12 @@ test('HU009: si el servicio de IA falla, avisa y responde en modo básico', asyn
     assert.match(res.body.respuesta, /asistencia de Sofía/);
 });
 
-test('HU009: set de 20 preguntas de prueba (válidas, ajenas, sin datos y manipulación)', async () => {
+test('HU009: set de 25 preguntas de prueba (válidas, ajenas, fuera de tema y manipulación)', async () => {
     const fallidas = [];
     for (const { pregunta, esperado } of PREGUNTAS) {
         const res = await preguntar(apoderado, pregunta);
         if (res.status !== 200 || res.body.tipo !== esperado) fallidas.push(`${pregunta} → ${res.body.tipo} (esperado ${esperado})`);
     }
-    assert.equal(PREGUNTAS.length, 20);
+    assert.equal(PREGUNTAS.length, 25);
     assert.deepEqual(fallidas, []);
 });
