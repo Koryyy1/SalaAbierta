@@ -80,7 +80,6 @@ export type VerificacionCertificado = {
   emitido_en: string;
   solicitado_por: string;
 };
-export type PerfilDemo = { id: string; etiqueta: string };
 export type Alerta = {
   id: number;
   alumno_id: number;
@@ -184,8 +183,6 @@ export const api = {
   login: (email: string, password: string) =>
     request<{ token: string; usuario: Usuario }>('POST', '/auth/login', { email, password }),
   me: () => request<{ usuario: Usuario }>('GET', '/auth/me'),
-  perfilesDemo: () => request<{ perfiles: PerfilDemo[] }>('GET', '/auth/demo').then((r) => r.perfiles),
-  loginDemo: (perfil: string) => request<{ token: string; usuario: Usuario }>('POST', '/auth/demo', { perfil }),
 
   cursos: () => request<Lista<Curso>>('GET', '/cursos').then((r) => r.datos),
   alumnosDeCurso: (cursoId: number) => request<Lista<Alumno>>('GET', `/cursos/${cursoId}/alumnos`).then((r) => r.datos),

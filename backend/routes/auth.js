@@ -39,34 +39,6 @@ router.post('/login', async (req, res) => {
     });
 });
 
-// Acceso de demostración: permite recorrer la app con las cuentas de prueba sin escribir correo ni contraseña
-// (por ejemplo, al llegar desde el código QR de la presentación). Usa datos sintéticos.
-// En producción solo funciona con MODO_DEMO=1; con datos reales de un colegio debe quedar en 0.
-const PERFILES_DEMO = [
-    { id: 'apoderado', etiqueta: 'Apoderado', email: 'apoderado@salaabierta.cl' },
-    { id: 'profesor', etiqueta: 'Profesor', email: 'profesor@salaabierta.cl' },
-    { id: 'direccion', etiqueta: 'Dirección', email: 'admin@salaabierta.cl' },
-];
-const demoActivo = () => (process.env.MODO_DEMO ? process.env.MODO_DEMO === '1' : process.env.NODE_ENV !== 'production');
-
-router.get('/demo', (req, res) => {
-    const perfiles = demoActivo() ? PERFILES_DEMO.map(({ id, etiqueta }) => ({ id, etiqueta })) : [];
-    res.json({ estado: 'Éxito', activo: perfiles.length > 0, perfiles });
-});
-
-router.post('/demo', async (req, res) => {
-    if (!demoActivo()) return res.status(403).json({ estado: 'Error', mensaje: 'El acceso de demostración no está disponible.' });
-    const perfil = PERFILES_DEMO.find((p) => p.id === req.body?.perfil);
-    if (!perfil) return res.status(400).json({ estado: 'Error', mensaje: 'Perfil de demostración inválido.' });
-
-    const { rows } = await pool.query(
-        'SELECT u.id, u.nombre, u.email, r.nombre AS rol FROM usuarios u JOIN roles r ON r.id = u.rol_id WHERE u.email = $1',
-        [perfil.email]
-    );
-    if (!rows.length) return res.status(404).json({ estado: 'Error', mensaje: 'La cuenta de demostración no existe en esta base de datos.' });
-    res.json({ estado: 'Éxito', token: firmarToken(rows[0]), usuario: rows[0] });
-});
-
 router.get('/me', autenticar, (req, res) => {
     res.json({ estado: 'Éxito', usuario: req.user });
 });

@@ -76,9 +76,9 @@ jobs:
           curl -fsS -X POST http://localhost/api/auth/login -H 'Content-Type: application/json' \
             -H 'Origin: http://localhost' \
             -d '{"email":"profesor@salaabierta.cl","password":"profesor123"}' | grep -q token
-          # Acceso de demostración (el que usa quien llega desde el código QR) y una sección nueva con ese token
-          TOKEN=$(curl -fsS -X POST http://localhost/api/auth/demo -H 'Content-Type: application/json' \
-            -d '{"perfil":"apoderado"}' | sed -E 's/.*"token":"([^"]+)".*/\1/')
+          # Una sección nueva con la sesión de un apoderado
+          TOKEN=$(curl -fsS -X POST http://localhost/api/auth/login -H 'Content-Type: application/json' \
+            -d '{"email":"apoderado@salaabierta.cl","password":"apoderado123"}' | sed -E 's/.*"token":"([^"]+)".*/\1/')
           curl -fsS http://localhost/api/cursos/1/horario -H "Authorization: Bearer $TOKEN" | grep -q Matemática
           curl -fsS http://localhost/horario | grep -qi '<html'
           # La base de datos trabaja en la hora del colegio

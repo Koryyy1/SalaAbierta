@@ -9,7 +9,6 @@ type AuthState = {
   usuario: Usuario | null;
   cargando: boolean;
   iniciarSesion: (email: string, password: string) => Promise<void>;
-  entrarDemo: (perfil: string) => Promise<void>;
   cerrarSesion: () => Promise<void>;
 };
 
@@ -50,17 +49,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUsuario(u);
   }, []);
 
-  // Acceso de demostración: entra con una cuenta de prueba, sin escribir correo ni contraseña
-  const entrarDemo = useCallback(async (perfil: string) => {
-    const { token, usuario: u } = await api.loginDemo(perfil);
-    setToken(token);
-    await storage.set(TOKEN_KEY, token);
-    setUsuario(u);
-  }, []);
-
   const value = useMemo(
-    () => ({ usuario, cargando, iniciarSesion, entrarDemo, cerrarSesion }),
-    [usuario, cargando, iniciarSesion, entrarDemo, cerrarSesion],
+    () => ({ usuario, cargando, iniciarSesion, cerrarSesion }),
+    [usuario, cargando, iniciarSesion, cerrarSesion],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

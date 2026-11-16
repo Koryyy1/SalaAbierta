@@ -65,8 +65,6 @@ npm run web
 | Apoderado (2 pupilos) | apoderado2@salaabierta.cl | apoderado123 |
 | Dirección: Patricia Vidal (rol Administrador: resumen del colegio, auditoría, umbrales y verificación de certificados) | admin@salaabierta.cl | admin123 |
 
-El inicio de sesión también ofrece los botones **Entrar como apoderado / profesor / dirección**, que abren estas cuentas de prueba sin escribir credenciales (acceso de demostración). En un despliegue con `NODE_ENV=production` solo aparecen con `MODO_DEMO=1`.
-
 ### Alcance implementado
 * **Épica 001 – Gestión académica:** el profesor pasa asistencia, registra y edita notas y anotaciones; todo cambio queda en la tabla `auditoria` (`GET /api/auditoria`, rol Administrador).
 * **Épica 002 – Muro:** el profesor publica anuncios; el apoderado ve solo los datos de sus pupilos, lee el muro, confirma recepción y comenta; el profesor ve quiénes confirmaron cada anuncio y cuántos faltan.
