@@ -28,8 +28,8 @@ SalaAbierta/
 ```
 
 ## 🛠️ Tecnologías Utilizadas
-* *Frontend Móvil/Web:* React Native con Expo (Expo Router, TypeScript) — carpeta `frontend/`.
-* *Backend & API:* Node.js + Express con JWT y control de acceso por roles (RBAC) — carpeta `backend/`.
+* *Frontend Móvil/Web:* React Native con Expo (Expo Router, TypeScript), en la carpeta `frontend/`.
+* *Backend & API:* Node.js + Express con JWT y control de acceso por roles (RBAC), en la carpeta `backend/`.
 * *Base de Datos:* PostgreSQL. En desarrollo, sin configuración, se usa PostgreSQL embebido (PGlite).
 * *Inteligencia Artificial:* Google Gemini para la asistente conversacional Sali (arquitectura RAG); sin clave responde en modo básico.
 * *Despliegue:* Docker Compose (PostgreSQL, API y Caddy), túnel HTTPS (ngrok o Cloudflare) y APK de Android con EAS Build. Ver [DESPLIEGUE.md](DESPLIEGUE.md).
