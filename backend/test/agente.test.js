@@ -54,7 +54,8 @@ test('Sali: quita el formato Markdown de las respuestas del modelo', async () =>
 
 test('Sali: no repite su presentación en cada respuesta', async () => {
     const { INSTRUCCIONES, sinPresentacion } = require('../services/agente');
-    assert.match(INSTRUCCIONES, /no digas tu nombre ni te presentes otra vez/);
+    assert.match(INSTRUCCIONES, /NUNCA empieces con un saludo/);
+    assert.match(INSTRUCCIONES, /ni te presentes otra vez/);
     assert.equal(
         sinPresentacion('¡Hola! Soy Sali, la asistente automática de SalaAbierta. su promedio es 6,1.'),
         'Su promedio es 6,1.'
