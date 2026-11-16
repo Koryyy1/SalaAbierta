@@ -29,7 +29,7 @@ La web llama a `/api` en el mismo sitio desde el que se abrió. Por eso la misma
 
 ---
 
-## Parte 1 · En tu PC con Docker (localhost)
+## Parte 1: En tu PC con Docker (localhost)
 
 ### 1. Instalar Docker Desktop (una sola vez)
 
@@ -71,11 +71,11 @@ Abrir **<http://localhost>**. Se entra con los usuarios de prueba (están en el 
 
 ---
 
-## Parte 2 · Compartirla por Internet con un túnel
+## Parte 2: Compartirla por Internet con un túnel
 
 Un túnel crea un enlace público con HTTPS que llega hasta los contenedores de tu PC. No hace falta abrir puertos en el router. Funciona mientras el PC esté encendido y Docker corriendo.
 
-### Opción A · Cloudflare (sin cuenta, recomendada para mostrarla rápido)
+### Opción A: Cloudflare (sin cuenta, recomendada para mostrarla rápido)
 
 ```powershell
 docker compose --profile tunel up -d --build
@@ -86,7 +86,7 @@ En los registros aparece un recuadro con un enlace del tipo **`https://palabras-
 
 > El enlace cambia cada vez que se reinicia el túnel. Para cerrarlo: `docker compose stop tunel`.
 
-### Opción B · ngrok con dominio fijo (necesaria para el APK)
+### Opción B: ngrok con dominio fijo (necesaria para el APK)
 
 ngrok regala **un dominio fijo** por cuenta, así que el enlace no cambia nunca.
 
@@ -112,7 +112,7 @@ ngrok regala **un dominio fijo** por cuenta, así que el enlace no cambia nunca.
 
 ---
 
-## Parte 3 · APK de Android (EAS Build)
+## Parte 3: APK de Android (EAS Build)
 
 El APK se compila en los servidores de Expo, así que no hace falta Android Studio. Como la URL de la API queda grabada dentro del APK, necesita una dirección que no cambie: el dominio fijo de ngrok (Parte 2, opción B) o el de un servidor (Parte 4).
 
@@ -135,7 +135,7 @@ La app se llama **SalaAbierta** (paquete `cl.salaabierta.app`). Funciona mientra
 
 ---
 
-## Parte 4 (opcional) · Servidor en AWS
+## Parte 4 (opcional): Servidor en AWS
 
 > Requiere un curso **AWS Academy Learner Lab** vigente o una cuenta AWS propia. Los pasos son los mismos en ambos casos (en una cuenta propia, la clave se crea en *Key pair → Create new key pair*).
 
