@@ -386,6 +386,10 @@ export function LogoutLink() {
   );
 }
 
+// Notas y promedios con coma decimal, como se escriben en Chile: 6,0
+export const formatNota = (n: number | null | undefined) =>
+  n === null || n === undefined ? '—' : n.toLocaleString('es-CL', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
 export const formatFecha = (iso: string) => {
   const [y, m, d] = iso.slice(0, 10).split('-');
   return `${d}-${m}-${y}`;

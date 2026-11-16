@@ -1,5 +1,5 @@
 
-import { Card, colors, Empty, formatFecha, Loading, Notice, PupilScreen, useAsync } from '@/components/ui';
+import { Card, colors, Empty, formatFecha, formatNota, Loading, Notice, PupilScreen, useAsync } from '@/components/ui';
 import { api } from '@/lib/api';
 import { Text } from '@/components/texto';
 
@@ -12,14 +12,14 @@ function Notas({ alumnoId }: { alumnoId: number }) {
       {data && (
         <Card>
           <Text style={{ color: '#5d3b2b', fontWeight: '800' }}>PROMEDIO ACTUAL</Text>
-          <Text style={{ color: '#241610', fontSize: 40, fontWeight: '800' }}>{data.promedio?.toFixed(1) ?? '—'}</Text>
+          <Text style={{ color: '#241610', fontSize: 40, fontWeight: '800' }}>{formatNota(data.promedio)}</Text>
         </Card>
       )}
       {data && !data.datos.length && <Empty text="Aún no hay calificaciones." />}
       {data?.datos.map((n) => (
         <Card key={n.id}>
           <Text style={{ color: '#241610', fontSize: 16, fontWeight: '800' }}>
-            {n.asignatura} · {n.nota.toFixed(1)}
+            {n.asignatura} · {formatNota(n.nota)}
           </Text>
           <Text style={{ color: '#5d3b2b' }}>{n.descripcion}</Text>
           <Text style={{ color: colors.textoSecundario, fontSize: 14 }}>{formatFecha(n.fecha)}</Text>
