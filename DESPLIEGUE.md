@@ -51,6 +51,8 @@ En `.env`:
 - `DOMINIO`: dejar `:80`.
 - `DB_PASSWORD` y `JWT_SECRET`: escribir textos largos inventados. `JWT_SECRET` debe tener al menos 32 caracteres.
 - `GEMINI_API_KEY`: opcional; pegar la clave de Gemini para que Sali use IA.
+- `MODO_DEMO`: opcional. Con `1` (valor por defecto), el inicio de sesión muestra los botones **Entrar como apoderado / profesor / dirección**, que abren las cuentas de prueba sin escribir correo ni contraseña. Sirve para quien llega desde un enlace o un código QR. Poner `0` si alguna vez se cargan datos reales.
+- `ZONA_HORARIA`: opcional; por defecto `America/Santiago`. Define qué día es «hoy» y la hora con que se guardan los registros.
 
 ### 3. Levantar
 
@@ -66,7 +68,7 @@ docker compose ps
 
 Los servicios `db`, `api` y `web` deben quedar *running*, y `db` y `api` además *healthy*.
 
-Abrir **<http://localhost>**. Se entra con los mismos usuarios de prueba de siempre. Otros dispositivos conectados al mismo wifi pueden entrar con `http://<IP-del-PC>`, por ejemplo `http://192.168.1.2`, si el firewall de Windows lo permite.
+Abrir **<http://localhost>**. Se entra con los usuarios de prueba de siempre o, sin escribir nada, con los botones de demostración del inicio de sesión. Otros dispositivos conectados al mismo wifi pueden entrar con `http://<IP-del-PC>`, por ejemplo `http://192.168.1.2`, si el firewall de Windows lo permite.
 
 ---
 
@@ -106,6 +108,8 @@ ngrok regala **un dominio fijo** por cuenta, así que el enlace no cambia nunca.
    ```
 
 6. Abrir `https://algo-algo.ngrok-free.app`. La primera visita desde un navegador muestra un aviso de ngrok: presionar *Visit Site*.
+
+**Código QR para mostrar la app.** El QR debe apuntar a la dirección del túnel (`https://…ngrok-free.app` o `.dev`), no a `localhost`. Quien lo escanea ve el aviso de ngrok (*Visit Site*), luego el inicio de sesión, y entra con **Entrar como apoderado** sin necesidad de tener una cuenta. El QR solo funciona mientras el PC esté encendido con `docker compose --profile ngrok up -d`.
 
 ---
 
@@ -266,4 +270,5 @@ Probar en el navegador:
 | ngrok dice que el dominio no es válido | `NGROK_DOMINIO` debe ser exactamente el reclamado en el panel, sin `https://` |
 | La compilación de `web` se corta (*killed*) | Falta memoria: en Docker Desktop subir la memoria (Settings → Resources) o, en un servidor, usar swap |
 | El APK no inicia sesión | La URL de `eas.json` no coincide con la del túnel o servidor, o están apagados |
+| No aparecen los botones «Entrar como…» | `MODO_DEMO=0` en `.env`, o la API no se actualizó: `git pull` y `docker compose --profile ngrok up -d --build` |
 | Sali responde en "modo básico" | Falta `GEMINI_API_KEY` en `.env` (después de agregarla: `docker compose up -d api`) |
