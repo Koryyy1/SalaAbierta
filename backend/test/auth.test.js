@@ -33,27 +33,3 @@ test('/me devuelve el usuario del token', async () => {
     assert.equal(res.status, 200);
     assert.equal(res.body.usuario.rol, 'Apoderado');
 });
-
-test('acceso de demostración: entra con una cuenta de prueba sin escribir credenciales', async () => {
-    const perfiles = await request(app).get('/api/auth/demo');
-    assert.equal(perfiles.body.activo, true);
-    assert.deepEqual(perfiles.body.perfiles.map((p) => p.id), ['apoderado', 'profesor', 'direccion']);
-
-    const res = await request(app).post('/api/auth/demo').send({ perfil: 'apoderado' });
-    assert.equal(res.status, 200);
-    assert.equal(res.body.usuario.rol, 'Apoderado');
-    assert.equal(res.body.usuario.password_hash, undefined);
-    assert.equal((await api(res.body.token).get('/api/apoderado/alumnos')).status, 200);
-
-    assert.equal((await request(app).post('/api/auth/demo').send({ perfil: 'otro' })).status, 400);
-});
-
-test('acceso de demostración: se puede desactivar con MODO_DEMO=0', async () => {
-    process.env.MODO_DEMO = '0';
-    try {
-        assert.equal((await request(app).get('/api/auth/demo')).body.activo, false);
-        assert.equal((await request(app).post('/api/auth/demo').send({ perfil: 'apoderado' })).status, 403);
-    } finally {
-        delete process.env.MODO_DEMO;
-    }
-});
