@@ -1,0 +1,28 @@
+name: Capturas (temporal)
+on:
+  push:
+    branches: ['tmp/capturas-presentacion']
+permissions:
+  contents: write
+jobs:
+  capturas:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: printf 'DOMINIO=:80\nDB_PASSWORD=prueba-ci\nJWT_SECRET=secreto-solo-para-ci-0123456789\n' > .env
+      - run: docker compose up -d --build db api web
+      - run: for i in $(seq 1 60); do curl -fsS http://localhost/api/holamundo && break; sleep 2; done
+      - uses: actions/setup-node@v5
+        with: { node-version: 22 }
+      - working-directory: tmpcap
+        run: |
+          npx playwright install --with-deps chromium
+          mkdir -p capturas && node capturar.js
+      - name: Publicar capturas en una rama temporal
+        run: |
+          git config user.name "Koryyy1" && git config user.email "Koryyy1@users.noreply.github.com"
+          git checkout --orphan tmp/capturas-resultado
+          git rm -rfq --cached .
+          git add -f tmpcap/capturas
+          git commit -qm "capturas"
+          git push -f origin tmp/capturas-resultado
