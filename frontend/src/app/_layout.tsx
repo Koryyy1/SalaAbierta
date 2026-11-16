@@ -14,6 +14,7 @@ SplashScreen.preventAutoHideAsync();
 const privadas = [
   'index',
   'muro',
+  'horario',
   'profesor/asistencia',
   'profesor/notas',
   'profesor/anotaciones',
@@ -22,9 +23,11 @@ const privadas = [
   'apoderado/notas',
   'apoderado/anotaciones',
   'apoderado/asistente',
+  'apoderado/certificados',
   'admin/resumen',
   'admin/auditoria',
   'admin/umbrales',
+  'admin/certificados',
 ] as const;
 
 function Routes() {

@@ -19,13 +19,14 @@ import {
 import { api, type FiltrosAuditoria, type RegistroAuditoria } from '@/lib/api';
 import { Text } from '@/components/texto';
 
-const TABLAS = ['todas', 'asistencia', 'calificaciones', 'anotaciones', 'anuncios', 'umbrales_alerta'] as const;
+const TABLAS = ['todas', 'asistencia', 'calificaciones', 'anotaciones', 'anuncios', 'certificados', 'umbrales_alerta'] as const;
 const NOMBRE_TABLA: Record<(typeof TABLAS)[number], string> = {
   todas: 'Todas',
   asistencia: 'Asistencia',
   calificaciones: 'Notas',
   anotaciones: 'Anotaciones',
   anuncios: 'Anuncios',
+  certificados: 'Certificados',
   umbrales_alerta: 'Umbrales',
 };
 
@@ -53,6 +54,7 @@ const ESTADO: Record<string, string> = {
   justificado: 'Justificado',
 };
 const TIPO_ANOTACION: Record<string, string> = { positiva: 'positiva', negativa: 'negativa', observacion: 'de observación' };
+const TIPO_CERTIFICADO: Record<string, string> = { alumno_regular: 'de alumno regular', notas: 'de notas', asistencia: 'de asistencia' };
 const UMBRAL: Record<string, (v: number) => string> = {
   promedio_minimo: (v) => `Promedio mínimo ${decimal(v)}`,
   asistencia_minima: (v) => `Asistencia mínima ${v}%`,
@@ -64,6 +66,7 @@ const CATEGORIA: Record<string, string> = {
   calificaciones: 'Notas',
   anotaciones: 'Anotaciones',
   anuncios: 'Muro',
+  certificados: 'Certificados',
   umbrales_alerta: 'Alertas',
 };
 
@@ -102,6 +105,11 @@ function describir(r: RegistroAuditoria): { titulo: string; lineas: string[] } {
       return {
         titulo: `Publicó un anuncio${r.curso ? ` en ${r.curso}` : ''}`,
         lineas: [`"${texto(despues.titulo)}"`],
+      };
+    case 'certificados':
+      return {
+        titulo: `Emitió un certificado ${TIPO_CERTIFICADO[texto(despues.tipo)] ?? ''} de ${alumno}`.replace('  ', ' '),
+        lineas: [`Código ${texto(despues.codigo)}`],
       };
     case 'umbrales_alerta': {
       const cambios = Object.keys(UMBRAL)

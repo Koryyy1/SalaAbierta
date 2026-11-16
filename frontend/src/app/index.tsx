@@ -100,6 +100,8 @@ const menuApoderado: MenuItem[] = [
   { label: 'Anotaciones', icono: 'anotaciones', href: '/apoderado/anotaciones' },
   { label: 'Muro del curso', icono: 'muro', href: '/muro' },
   { label: 'Asistencia', icono: 'calendario', href: '/apoderado/asistencia' },
+  { label: 'Horario', icono: 'horario', href: '/horario' },
+  { label: 'Certificados', icono: 'certificado', href: '/apoderado/certificados' },
 ];
 
 const menuProfesor: MenuItem[] = [
@@ -108,12 +110,14 @@ const menuProfesor: MenuItem[] = [
   { label: 'Anotaciones', icono: 'anotaciones', href: '/profesor/anotaciones' },
   { label: 'Muro del curso', icono: 'muro', href: '/muro' },
   { label: 'Alertas tempranas', icono: 'alertas', href: '/profesor/alertas' },
+  { label: 'Horario', icono: 'horario', href: '/horario' },
 ];
 
 const menuAdmin: MenuItem[] = [
   { label: 'Resumen del colegio', icono: 'resumen', href: '/admin/resumen' },
   { label: 'Auditoría', icono: 'auditoria', href: '/admin/auditoria' },
   { label: 'Umbrales de alerta', icono: 'umbrales', href: '/admin/umbrales' },
+  { label: 'Verificar certificado', icono: 'certificado', href: '/admin/certificados' },
 ];
 
 export default function HomeScreen() {

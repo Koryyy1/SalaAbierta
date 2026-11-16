@@ -42,6 +42,8 @@ app.use('/api', require('./routes/academico')); // Épica 001: gestión académi
 app.use('/api', require('./routes/muro')); // Épica 002: muro de comunicación
 app.use('/api', require('./routes/resumen')); // Inicio del apoderado y resumen de la dirección
 app.use('/api', require('./routes/alertas')); // Épica 003: alertas tempranas (HU010)
+app.use('/api', require('./routes/horario')); // Horario de clases del curso
+app.use('/api', require('./routes/certificados')); // Certificados del estudiante
 app.use('/api/agente', require('./routes/agente')); // Épica 003: agente IA conversacional (HU009)
 
 app.use('/api', (req, res) => res.status(404).json({ estado: 'Error', mensaje: 'Ruta no encontrada.' }));

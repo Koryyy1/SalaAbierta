@@ -9,6 +9,8 @@ services:
       POSTGRES_DB: ${DB_NAME:-sala_abierta_db}
       POSTGRES_USER: ${DB_USER:-salaabierta}
       POSTGRES_PASSWORD: ${DB_PASSWORD:?Falta DB_PASSWORD en .env}
+    # Las fechas con hora (auditoría, anuncios, certificados) se guardan en la hora del colegio
+    command: ["postgres", "-c", "timezone=${ZONA_HORARIA:-America/Santiago}"]
     volumes:
       - datos_postgres:/var/lib/postgresql/data
     healthcheck:
@@ -29,6 +31,8 @@ services:
       PORT: 3000
       # Confía en los proxies de la red interna (Caddy y el túnel) para conocer la IP real del visitante
       TRUST_PROXY: loopback,uniquelocal
+      # Zona horaria del colegio: define qué día es "hoy" para la asistencia, el horario y los certificados
+      ZONA_HORARIA: ${ZONA_HORARIA:-America/Santiago}
       DB_HOST: db
       DB_PORT: 5432
       DB_NAME: ${DB_NAME:-sala_abierta_db}
@@ -37,6 +41,8 @@ services:
       JWT_SECRET: ${JWT_SECRET:?Falta JWT_SECRET en .env}
       # La web se sirve desde el mismo sitio que la API, así que CORS solo hace falta para otros orígenes
       CORS_ORIGINS: ${CORS_ORIGINS:-}
+      # Botones "Entrar como…" con las cuentas de prueba. Poner MODO_DEMO=0 en .env si se cargan datos reales
+      MODO_DEMO: ${MODO_DEMO:-1}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash-lite}
 
